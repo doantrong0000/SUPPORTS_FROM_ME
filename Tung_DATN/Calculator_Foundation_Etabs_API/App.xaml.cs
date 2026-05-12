@@ -13,5 +13,6 @@ namespace Calculator_Foundation_Etabs_API
     /// </summary>
     public partial class App : Application
     {
+        //
     }
 }

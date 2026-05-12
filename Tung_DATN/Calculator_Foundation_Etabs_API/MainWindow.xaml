@@ -1,28 +1,158 @@
-﻿<Window x:Class="Calculator_Foundation_Etabs_API.MainWindow"
+<Window x:Class="Calculator_Foundation_Etabs_API.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Calculator_Foundation_Etabs_API"
-        mc:Ignorable="d"
-        Title="ETABS API Hello World" Height="600" Width="1000" WindowStartupLocation="CenterScreen">
-    
+        xmlns:vm="clr-namespace:Calculator_Foundation_Etabs_API.ViewModels"
+        xmlns:conv="clr-namespace:Calculator_Foundation_Etabs_API.Models"
+        Title="Strip Footing Design Pro" Height="800" Width="1400" WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <conv:FractionConverter x:Key="FractionConverter"/>
+    </Window.Resources>
+    <Window.DataContext>
+        <vm:MainViewModel/>
+    </Window.DataContext>
+    <Grid Margin="10">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="400"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
 
-    <Grid Background="#F1F5F9">
-        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" >
-            <TextBlock Text="ETABS API Connection Test" FontSize="32" FontWeight="Bold" Foreground="#1E293B" HorizontalAlignment="Center" Margin="0,0,0,20"/>
+        <!-- INPUT PANEL -->
+        <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" Margin="0,0,10,0">
+            <StackPanel>
+                <TextBlock Text="THIẾT KẾ MÓNG BĂNG" FontSize="22" FontWeight="Bold" Margin="0,0,0,10"/>
+
+                <GroupBox Header="0. Thông số ETABS" Margin="0,0,0,10" Padding="10">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Tên Tổ Hợp (Load Combo)" Margin="0,0,0,5"/>
+                            <Grid Margin="0,0,0,10">
+                                <ComboBox Grid.Column="0" Margin="0,0,5,0" Padding="4" IsEditable="True" 
+                                          ItemsSource="{Binding LoadCombos}" 
+                                          Text="{Binding SelectedCombo, UpdateSourceTrigger=PropertyChanged}"/>
+                            </Grid>
+                        </StackPanel>
+                    </Grid>
+                </GroupBox>
+
+                <!-- Địa chất -->
+                <GroupBox Header="1. Thông số Địa chất (Terzaghi)" Margin="0,0,0,10" Padding="10">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="10"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Đất trên móng γ1 (kN/m³)" Margin="0,0,0,5"/>
+                            <TextBox Text="{Binding Gamma1, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10" Padding="4"/>
+                            
+                            <TextBlock Text="Đất dưới móng γ (kN/m³)" Margin="0,0,0,5"/>
+                            <TextBox Text="{Binding Gamma, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10" Padding="4"/>
+                            
+                            <TextBlock Text="Lực dính c (kPa)" Margin="0,0,0,5"/>
+                            <TextBox Text="{Binding C, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10" Padding="4"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Góc ma sát φ (°)" Margin="0,0,0,5"/>
+                            <TextBox Text="{Binding Phi, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10" Padding="4"/>
+                            
+                            <TextBlock Text="Sâu chôn móng hm (m)" Margin="0,0,0,5"/>
+                            <TextBox Text="{Binding Df, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10" Padding="4"/>
+
+                            <TextBlock Text="Hệ số an toàn (FS)" Margin="0,0,0,5" Foreground="Red" FontWeight="Bold"/>
+                            <TextBox Text="{Binding Fs, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10" Padding="4"/>
+                        </StackPanel>
+                    </Grid>
+                </GroupBox>
+
+                <!-- Vật liệu -->
+                <GroupBox Header="2. Thông số Vật liệu" Margin="0,0,0,10" Padding="10">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Margin="5">
+                            <TextBlock Text="Cấp độ bền Bê tông" Margin="0,0,0,5"/>
+                            <ComboBox ItemsSource="{Binding ConcreteGrades}" SelectedItem="{Binding SelectedConcrete}" Margin="0,0,0,10" Padding="4"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Margin="5">
+                            <TextBlock Text="Mác Thép" Margin="0,0,0,5"/>
+                            <ComboBox ItemsSource="{Binding RebarGrades}" SelectedItem="{Binding SelectedRebar}" Margin="0,0,0,10" Padding="4"/>
+                        </StackPanel>
+                    </Grid>
+                  
+              
+                </GroupBox>
+
+                <!-- Kích thước móng băng -->
+                <GroupBox Header="3. Kích thước Móng băng" Margin="0,0,0,10" Padding="10">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="10"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Bề rộng B (m)" Margin="0,0,0,5"/>
+                            <TextBox Text="{Binding B, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10" Padding="4"/>
+                            <TextBlock Text="Bề dày sườn bw (m)" Margin="0,0,0,5"/>
+                            <TextBox Text="{Binding Bw, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10" Padding="4"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Chiều cao H (m)" Margin="0,0,0,5"/>
+                            <TextBox Text="{Binding H, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10" Padding="4"/>
+                        </StackPanel>
+                    </Grid>
+                </GroupBox>
+
+                <Button Content="KẾT NỐI" Command="{Binding RefreshCombosCommand}" FontWeight="Bold" Padding="15" Margin="0,15,0,0" Background="#3B82F6" Foreground="White"/>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- VISUALIZATION PANEL -->
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
             
-            <Border Background="White" CornerRadius="12" Padding="40" Width="500">
-                <StackPanel>
-                    <TextBlock Text="Status:" FontSize="14" Foreground="#64748B" Margin="0,0,0,5"/>
-                    <TextBlock x:Name="StatusText" Text="Waiting for connection check..." FontSize="18" Foreground="#334155" Margin="0,0,0,20"/>
-                    
-                    <Button Content="Check ETABS Connection" Click="BtnCheckConnection_Click" HorizontalAlignment="Stretch"/>
-                </StackPanel>
-             
-            </Border>
-
-            <TextBlock Text="Make sure ETABS is running with an open model." FontSize="14" Foreground="#94A3B8" HorizontalAlignment="Center"/>
-        </StackPanel>
+            <TextBlock Grid.Row="0" Text="Danh sách móng trong dự án" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,10"/>
+            
+            <DataGrid ItemsSource="{Binding Foundations}" Grid.Row="1"
+                     MinRowHeight="35" AutoGenerateColumns="False" CanUserAddRows="False">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Tên móng" Binding="{Binding Name}" Width="80"/>
+                    <DataGridTextColumn Header="Kích thước (B x H x bw) m" Binding="{Binding Dimensions}" Width="160"/>
+                    <DataGridTextColumn Header="N (kN)" Binding="{Binding N, StringFormat={}{0:F1}}" Width="60"/>
+                    <DataGridTextColumn Header="M (kNm)" Binding="{Binding M, StringFormat={}{0:F1}}" Width="60"/>
+                    <DataGridTextColumn Header="Rtc (kPa)" Binding="{Binding Rtc, StringFormat={}{0:F1}}" Width="80"/>
+                    <DataGridTextColumn Header="Pmax" Binding="{Binding Pmax, StringFormat={}{0:F1}}" Width="70"/>
+                    <DataGridTextColumn Header="Pmin" Binding="{Binding Pmin, StringFormat={}{0:F1}}" Width="70"/>
+                    <DataGridTextColumn Header="As req (cm2)" Binding="{Binding AsReq, StringFormat=N2}" IsReadOnly="True" Width="100"/>
+                    <DataGridTextColumn Header="P Đâm thủng (kN)" Binding="{Binding PPunchMax, StringFormat=N2}" IsReadOnly="True" Width="120"/>
+                    <DataGridTextColumn Header="Khả năng chịu ĐT (kN)" Binding="{Binding PCdt, StringFormat=N2}" IsReadOnly="True" Width="130"/>
+                    <DataGridTextColumn Header="Kiểm tra ĐT" Binding="{Binding StatusPunch}" IsReadOnly="True" Width="100">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="FontWeight" Value="Bold"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding StatusPunch}" Value="ĐẠT">
+                                        <Setter Property="Foreground" Value="#2ECC71"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding StatusPunch}" Value="KHÔNG ĐẠT">
+                                        <Setter Property="Foreground" Value="#E74C3C"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="Trạng thái" Binding="{Binding Status}" Width="*"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Grid>
     </Grid>
 </Window>

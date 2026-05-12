@@ -1,0 +1,19 @@
+
+
+ ETABS Ultimate 64-bit 20.0.0 Build 2760 (Analysis Build 9883/64)               
+ File: C:\00.WORK\DATNPHUC\Tung_DATN\Etabs_Test.OUT                             
+                                                                     
+                                                                       
+
+ D I S P L A C E M E N T   D E G R E E S   O F   F R E E D O M
+
+         (A) = Active DOF, equilibrium equation
+         (-) = Restrained DOF, reaction computed
+         (+) = Constrained DOF
+         (>) = External substructure DOF
+         ( ) = Null DOF
+
+  JOINTS              UX  UY  UZ  RX  RY  RZ
+       5 TO      42    A   A   A   A   A   A
+      39 TO      72    -   -   -   A   A   A
+     ~73 TO    ~297    A   A   A   A   A   A
