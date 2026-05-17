@@ -5,7 +5,7 @@
         Height="720" Width="1350" 
         WindowStartupLocation="CenterScreen"
         ResizeMode="CanResizeWithGrip"
-        Background="#1E1E2E">
+        Background="#F0F0F0">
 
     <Window.Resources>
         <!-- Button Style -->
@@ -14,13 +14,15 @@
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="Padding" Value="12,6"/>
-            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#BBBBBB"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <Border Background="{TemplateBinding Background}" 
-                                CornerRadius="6" Padding="{TemplateBinding Padding}">
+                                CornerRadius="4" Padding="{TemplateBinding Padding}"
+                                BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
@@ -41,9 +43,9 @@
             <Setter Property="Height" Value="32"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="Background" Value="#2A2A3D"/>
-            <Setter Property="Foreground" Value="#CDD6F4"/>
-            <Setter Property="BorderBrush" Value="#45475A"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="Black"/>
+            <Setter Property="BorderBrush" Value="#CCCCCC"/>
         </Style>
 
         <!-- TextBox Style -->
@@ -51,30 +53,29 @@
             <Setter Property="Height" Value="32"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="Background" Value="#2A2A3D"/>
-            <Setter Property="Foreground" Value="#CDD6F4"/>
-            <Setter Property="BorderBrush" Value="#45475A"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="Black"/>
+            <Setter Property="BorderBrush" Value="#CCCCCC"/>
             <Setter Property="Padding" Value="8,4"/>
-            <Setter Property="CaretBrush" Value="#CDD6F4"/>
         </Style>
 
         <!-- Label Style -->
         <Style x:Key="LabelText" TargetType="TextBlock">
             <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Foreground" Value="#BAC2DE"/>
+            <Setter Property="FontWeight" Value="Normal"/>
+            <Setter Property="Foreground" Value="#333333"/>
             <Setter Property="FontSize" Value="12"/>
         </Style>
 
         <!-- DataGrid Header -->
         <Style x:Key="DgHeader" TargetType="DataGridColumnHeader">
-            <Setter Property="Background" Value="#313244"/>
-            <Setter Property="Foreground" Value="#CDD6F4"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Background" Value="#E0E0E0"/>
+            <Setter Property="Foreground" Value="Black"/>
+            <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="FontSize" Value="11"/>
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
             <Setter Property="Height" Value="32"/>
-            <Setter Property="BorderBrush" Value="#45475A"/>
+            <Setter Property="BorderBrush" Value="#CCCCCC"/>
             <Setter Property="BorderThickness" Value="0,0,1,1"/>
             <Setter Property="Padding" Value="4,0"/>
         </Style>
@@ -83,7 +84,7 @@
         <Style x:Key="CellCenter" TargetType="TextBlock">
             <Setter Property="HorizontalAlignment" Value="Center"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="Foreground" Value="#CDD6F4"/>
+            <Setter Property="Foreground" Value="Black"/>
         </Style>
     </Window.Resources>
 
@@ -94,59 +95,44 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <Border Grid.Row="0" Background="#313244" CornerRadius="8" Padding="16,10" Margin="0,0,0,10">
-            <Grid>
-                <TextBlock Text="⚡ TÍNH TOÁN THÉP DẦM - ETABS" FontSize="20" FontWeight="Bold" 
-                           Foreground="#89B4FA" HorizontalAlignment="Left" VerticalAlignment="Center"/>
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                    <Ellipse Width="10" Height="10" Margin="0,0,8,0" Name="StatusDot" Fill="#F38BA8"/>
-                    <TextBlock Name="txtConnectionStatus" Text="{Binding ConnectionStatus}" 
-                               Foreground="#A6ADC8" FontSize="11" VerticalAlignment="Center"/>
-                </StackPanel>
-            </Grid>
-        </Border>
-
-        <!-- Notification -->
-        <Border Grid.Row="0" Name="NotificationPanel" HorizontalAlignment="Center" VerticalAlignment="Bottom"
-                Background="#45475A" BorderBrush="#89B4FA" BorderThickness="1" CornerRadius="5" 
-                Padding="12,6" Margin="0,0,0,-5" Visibility="Collapsed" Panel.ZIndex="10">
-            <TextBlock Name="TxtNotification" Foreground="#CDD6F4" FontSize="11" FontWeight="SemiBold" MaxWidth="400" TextWrapping="Wrap"/>
+        <Border Grid.Row="0" Background="White" BorderBrush="#CCCCCC" BorderThickness="1" CornerRadius="4" Padding="16,10" Margin="0,0,0,10">
+            <TextBlock Text="TÍNH TOÁN THÉP DẦM - ETABS" FontSize="18" FontWeight="Bold" 
+                       Foreground="Black" HorizontalAlignment="Left" VerticalAlignment="Center"/>
         </Border>
 
         <!-- ETABS Connection Panel -->
-        <Border Grid.Row="1" Background="#313244" CornerRadius="8" Padding="12" Margin="0,0,0,8">
+        <Border Grid.Row="1" Background="White" BorderBrush="#CCCCCC" BorderThickness="1" CornerRadius="4" Padding="12" Margin="0,0,0,8">
             <StackPanel Orientation="Horizontal">
-                <Button Name="btnConnect" Content="🔗 Kết nối ETABS" Background="#89B4FA" 
-                        Style="{StaticResource ModernButton}" Click="BtnConnect_Click" Width="150"/>
-                <Button Name="btnLoadBeams" Content="📋 Lấy danh sách dầm" Background="#A6E3A1" 
-                        Style="{StaticResource ModernButton}" Click="BtnLoadBeams_Click" Margin="10,0,0,0" Width="160" IsEnabled="False"/>
+                <Button Name="btnConnect" Content="Kết nối ETABS" Background="#4A90E2" 
+                        Style="{StaticResource ModernButton}" Click="BtnConnect_Click" Width="130"/>
+                <Button Name="btnLoadBeams" Content="Lấy danh sách dầm" Background="#50C878" 
+                        Style="{StaticResource ModernButton}" Click="BtnLoadBeams_Click" Margin="10,0,0,0" Width="140" IsEnabled="False"/>
 
                 <TextBlock Text="Output Case:" Style="{StaticResource LabelText}" Margin="30,0,8,0"/>
                 <ComboBox Name="cmbOutputCase" Style="{StaticResource ModernComboBox}" Width="220"
                           ItemsSource="{Binding OutputCases}" SelectedItem="{Binding SelectedOutputCase, Mode=TwoWay}"/>
-                <Button Name="btnLoadForces" Content="📊 Lấy nội lực" Background="#F9E2AF" Foreground="#1E1E2E"
-                        Style="{StaticResource ModernButton}" Click="BtnLoadForces_Click" Margin="10,0,0,0" Width="130" IsEnabled="False"/>
-                <Button Name="btnExportExcel" Content="💾 Xuất Excel" Background="#A6E3A1" Foreground="#1E1E2E"
-                        Style="{StaticResource ModernButton}" Click="BtnExportExcel_Click" Margin="10,0,0,0" Width="120"/>
+                <Button Name="btnLoadForces" Content="Lấy nội lực" Background="#F5A623"
+                        Style="{StaticResource ModernButton}" Click="BtnLoadForces_Click" Margin="10,0,0,0" Width="110" IsEnabled="False"/>
+                <Button Name="btnExportExcel" Content="Xuất Excel" Background="#7ED321"
+                        Style="{StaticResource ModernButton}" Click="BtnExportExcel_Click" Margin="10,0,0,0" Width="110"/>
             </StackPanel>
         </Border>
 
         <!-- Default Values Panel -->
-        <Border Grid.Row="2" Background="#313244" CornerRadius="8" Padding="10" Margin="0,0,0,8">
+        <Border Grid.Row="2" Background="White" BorderBrush="#CCCCCC" BorderThickness="1" CornerRadius="4" Padding="10" Margin="0,0,0,8">
             <StackPanel Orientation="Horizontal">
                 <TextBlock Text="Chiều dày sàn mặc định:" Style="{StaticResource LabelText}" Margin="0,0,6,0"/>
                 <TextBox Name="txtFloorThickness" Style="{StaticResource ModernTextBox}" Width="60"
                          Text="{Binding DefaultFloorThickness, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Center"/>
-                <TextBlock Text="mm" Style="{StaticResource LabelText}" Margin="4,0,20,0" Foreground="#6C7086"/>
+                <TextBlock Text="mm" Style="{StaticResource LabelText}" Margin="4,0,20,0" Foreground="#666666"/>
 
                 <TextBlock Text="Chiều cao cột/tường:" Style="{StaticResource LabelText}" Margin="0,0,6,0"/>
                 <TextBox Name="txtWallHeight" Style="{StaticResource ModernTextBox}" Width="60"
                          Text="{Binding DefaultWallHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Center"/>
-                <TextBlock Text="mm" Style="{StaticResource LabelText}" Margin="4,0,0,0" Foreground="#6C7086"/>
+                <TextBlock Text="mm" Style="{StaticResource LabelText}" Margin="4,0,0,0" Foreground="#666666"/>
             </StackPanel>
         </Border>
 
@@ -154,23 +140,23 @@
         <DataGrid Grid.Row="3" Name="dgBeamData" ItemsSource="{Binding BeamList}"
                   AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
                   CanUserSortColumns="True" GridLinesVisibility="All"
-                  Background="#1E1E2E" RowBackground="#1E1E2E" AlternatingRowBackground="#262637"
-                  BorderBrush="#45475A" BorderThickness="1"
-                  Foreground="#CDD6F4" FontSize="11" RowHeight="26"
-                  HorizontalGridLinesBrush="#313244" VerticalGridLinesBrush="#313244"
+                  Background="White" RowBackground="White" AlternatingRowBackground="#F9F9F9"
+                  BorderBrush="#CCCCCC" BorderThickness="1"
+                  Foreground="Black" FontSize="11" RowHeight="26"
+                  HorizontalGridLinesBrush="#EEEEEE" VerticalGridLinesBrush="#EEEEEE"
                   SelectionMode="Single" SelectionUnit="FullRow"
                   HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
             <DataGrid.RowStyle>
                 <Style TargetType="DataGridRow">
                     <Style.Triggers>
                         <Trigger Property="IsSelected" Value="True">
-                            <Setter Property="Background" Value="#45475A"/>
+                            <Setter Property="Background" Value="#DEEFFF"/>
+                            <Setter Property="Foreground" Value="Black"/>
                         </Trigger>
                     </Style.Triggers>
                 </Style>
             </DataGrid.RowStyle>
             <DataGrid.Columns>
-                <!-- Tên dầm -->
                 <DataGridTextColumn Header="Tên Dầm" Binding="{Binding Name}" Width="90" IsReadOnly="True"
                                     HeaderStyle="{StaticResource DgHeader}" ElementStyle="{StaticResource CellCenter}"/>
                 <DataGridTextColumn Header="Tầng" Binding="{Binding Story}" Width="60" IsReadOnly="True"
@@ -182,168 +168,38 @@
                 <DataGridTextColumn Header="L (mm)" Binding="{Binding Ltt, StringFormat=F0}" Width="70" IsReadOnly="True"
                                     HeaderStyle="{StaticResource DgHeader}" ElementStyle="{StaticResource CellCenter}"/>
 
-                <!-- Moment -->
-                <DataGridTextColumn Header="M1 (kNm)" Binding="{Binding Momen1, StringFormat=F2}" Width="85" IsReadOnly="True">
-                    <DataGridTextColumn.HeaderStyle>
-                        <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource DgHeader}">
-                            <Setter Property="Background" Value="#3B4261"/>
-                        </Style>
-                    </DataGridTextColumn.HeaderStyle>
-                    <DataGridTextColumn.ElementStyle>
-                        <Style TargetType="TextBlock" BasedOn="{StaticResource CellCenter}">
-                            <Setter Property="Foreground" Value="#89B4FA"/>
-                            <Setter Property="FontWeight" Value="SemiBold"/>
-                        </Style>
-                    </DataGridTextColumn.ElementStyle>
-                </DataGridTextColumn>
-                <DataGridTextColumn Header="M2 (kNm)" Binding="{Binding Momen2, StringFormat=F2}" Width="85" IsReadOnly="True">
-                    <DataGridTextColumn.HeaderStyle>
-                        <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource DgHeader}">
-                            <Setter Property="Background" Value="#3B4261"/>
-                        </Style>
-                    </DataGridTextColumn.HeaderStyle>
-                    <DataGridTextColumn.ElementStyle>
-                        <Style TargetType="TextBlock" BasedOn="{StaticResource CellCenter}">
-                            <Setter Property="Foreground" Value="#89B4FA"/>
-                            <Setter Property="FontWeight" Value="SemiBold"/>
-                        </Style>
-                    </DataGridTextColumn.ElementStyle>
-                </DataGridTextColumn>
-                <DataGridTextColumn Header="M3 (kNm)" Binding="{Binding Momen3, StringFormat=F2}" Width="85" IsReadOnly="True">
-                    <DataGridTextColumn.HeaderStyle>
-                        <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource DgHeader}">
-                            <Setter Property="Background" Value="#3B4261"/>
-                        </Style>
-                    </DataGridTextColumn.HeaderStyle>
-                    <DataGridTextColumn.ElementStyle>
-                        <Style TargetType="TextBlock" BasedOn="{StaticResource CellCenter}">
-                            <Setter Property="Foreground" Value="#89B4FA"/>
-                            <Setter Property="FontWeight" Value="SemiBold"/>
-                        </Style>
-                    </DataGridTextColumn.ElementStyle>
-                </DataGridTextColumn>
+                <DataGridTextColumn Header="M1 (kNm)" Binding="{Binding Momen1, StringFormat=F2}" Width="85" IsReadOnly="True"
+                                    HeaderStyle="{StaticResource DgHeader}" ElementStyle="{StaticResource CellCenter}"/>
+                <DataGridTextColumn Header="M2 (kNm)" Binding="{Binding Momen2, StringFormat=F2}" Width="85" IsReadOnly="True"
+                                    HeaderStyle="{StaticResource DgHeader}" ElementStyle="{StaticResource CellCenter}"/>
+                <DataGridTextColumn Header="M3 (kNm)" Binding="{Binding Momen3, StringFormat=F2}" Width="85" IsReadOnly="True"
+                                    HeaderStyle="{StaticResource DgHeader}" ElementStyle="{StaticResource CellCenter}"/>
 
-                <!-- Shear -->
-                <DataGridTextColumn Header="V1 (kN)" Binding="{Binding Shear1, StringFormat=F2}" Width="80" IsReadOnly="True">
-                    <DataGridTextColumn.HeaderStyle>
-                        <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource DgHeader}">
-                            <Setter Property="Background" Value="#3B4252"/>
-                        </Style>
-                    </DataGridTextColumn.HeaderStyle>
-                    <DataGridTextColumn.ElementStyle>
-                        <Style TargetType="TextBlock" BasedOn="{StaticResource CellCenter}">
-                            <Setter Property="Foreground" Value="#94E2D5"/>
-                        </Style>
-                    </DataGridTextColumn.ElementStyle>
-                </DataGridTextColumn>
-                <DataGridTextColumn Header="V2 (kN)" Binding="{Binding Shear2, StringFormat=F2}" Width="80" IsReadOnly="True">
-                    <DataGridTextColumn.HeaderStyle>
-                        <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource DgHeader}">
-                            <Setter Property="Background" Value="#3B4252"/>
-                        </Style>
-                    </DataGridTextColumn.HeaderStyle>
-                    <DataGridTextColumn.ElementStyle>
-                        <Style TargetType="TextBlock" BasedOn="{StaticResource CellCenter}">
-                            <Setter Property="Foreground" Value="#94E2D5"/>
-                        </Style>
-                    </DataGridTextColumn.ElementStyle>
-                </DataGridTextColumn>
-                <DataGridTextColumn Header="V3 (kN)" Binding="{Binding Shear3, StringFormat=F2}" Width="80" IsReadOnly="True">
-                    <DataGridTextColumn.HeaderStyle>
-                        <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource DgHeader}">
-                            <Setter Property="Background" Value="#3B4252"/>
-                        </Style>
-                    </DataGridTextColumn.HeaderStyle>
-                    <DataGridTextColumn.ElementStyle>
-                        <Style TargetType="TextBlock" BasedOn="{StaticResource CellCenter}">
-                            <Setter Property="Foreground" Value="#94E2D5"/>
-                        </Style>
-                    </DataGridTextColumn.ElementStyle>
-                </DataGridTextColumn>
+                <DataGridTextColumn Header="V1 (kN)" Binding="{Binding Shear1, StringFormat=F2}" Width="80" IsReadOnly="True"
+                                    HeaderStyle="{StaticResource DgHeader}" ElementStyle="{StaticResource CellCenter}"/>
+                <DataGridTextColumn Header="V2 (kN)" Binding="{Binding Shear2, StringFormat=F2}" Width="80" IsReadOnly="True"
+                                    HeaderStyle="{StaticResource DgHeader}" ElementStyle="{StaticResource CellCenter}"/>
+                <DataGridTextColumn Header="V3 (kN)" Binding="{Binding Shear3, StringFormat=F2}" Width="80" IsReadOnly="True"
+                                    HeaderStyle="{StaticResource DgHeader}" ElementStyle="{StaticResource CellCenter}"/>
 
-                <!-- As Required -->
-                <DataGridTextColumn Header="As Trái (mm²)" Binding="{Binding AsRequiredTrai, StringFormat=F0}" Width="90" IsReadOnly="True">
-                    <DataGridTextColumn.HeaderStyle>
-                        <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource DgHeader}">
-                            <Setter Property="Background" Value="#45364B"/>
-                        </Style>
-                    </DataGridTextColumn.HeaderStyle>
-                    <DataGridTextColumn.ElementStyle>
-                        <Style TargetType="TextBlock" BasedOn="{StaticResource CellCenter}">
-                            <Setter Property="Foreground" Value="#CBA6F7"/>
-                            <Setter Property="FontWeight" Value="SemiBold"/>
-                        </Style>
-                    </DataGridTextColumn.ElementStyle>
-                </DataGridTextColumn>
-                <DataGridTextColumn Header="As Dưới (mm²)" Binding="{Binding AsRequiredDuoi, StringFormat=F0}" Width="90" IsReadOnly="True">
-                    <DataGridTextColumn.HeaderStyle>
-                        <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource DgHeader}">
-                            <Setter Property="Background" Value="#45364B"/>
-                        </Style>
-                    </DataGridTextColumn.HeaderStyle>
-                    <DataGridTextColumn.ElementStyle>
-                        <Style TargetType="TextBlock" BasedOn="{StaticResource CellCenter}">
-                            <Setter Property="Foreground" Value="#CBA6F7"/>
-                            <Setter Property="FontWeight" Value="SemiBold"/>
-                        </Style>
-                    </DataGridTextColumn.ElementStyle>
-                </DataGridTextColumn>
-                <DataGridTextColumn Header="As Phải (mm²)" Binding="{Binding AsRequiredPhai, StringFormat=F0}" Width="90" IsReadOnly="True">
-                    <DataGridTextColumn.HeaderStyle>
-                        <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource DgHeader}">
-                            <Setter Property="Background" Value="#45364B"/>
-                        </Style>
-                    </DataGridTextColumn.HeaderStyle>
-                    <DataGridTextColumn.ElementStyle>
-                        <Style TargetType="TextBlock" BasedOn="{StaticResource CellCenter}">
-                            <Setter Property="Foreground" Value="#CBA6F7"/>
-                            <Setter Property="FontWeight" Value="SemiBold"/>
-                        </Style>
-                    </DataGridTextColumn.ElementStyle>
-                </DataGridTextColumn>
+                <DataGridTextColumn Header="As Trái (mm²)" Binding="{Binding AsRequiredTrai, StringFormat=F0}" Width="90" IsReadOnly="True"
+                                    HeaderStyle="{StaticResource DgHeader}" ElementStyle="{StaticResource CellCenter}"/>
+                <DataGridTextColumn Header="As Dưới (mm²)" Binding="{Binding AsRequiredDuoi, StringFormat=F0}" Width="90" IsReadOnly="True"
+                                    HeaderStyle="{StaticResource DgHeader}" ElementStyle="{StaticResource CellCenter}"/>
+                <DataGridTextColumn Header="As Phải (mm²)" Binding="{Binding AsRequiredPhai, StringFormat=F0}" Width="90" IsReadOnly="True"
+                                    HeaderStyle="{StaticResource DgHeader}" ElementStyle="{StaticResource CellCenter}"/>
 
-                <!-- Stirrup Spacing -->
-                <DataGridTextColumn Header="Sv1 (mm)" Binding="{Binding StirrupSpacingV1, StringFormat=F0}" Width="70" IsReadOnly="True">
-                    <DataGridTextColumn.HeaderStyle>
-                        <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource DgHeader}">
-                            <Setter Property="Background" Value="#45402E"/>
-                        </Style>
-                    </DataGridTextColumn.HeaderStyle>
-                    <DataGridTextColumn.ElementStyle>
-                        <Style TargetType="TextBlock" BasedOn="{StaticResource CellCenter}">
-                            <Setter Property="Foreground" Value="#F9E2AF"/>
-                        </Style>
-                    </DataGridTextColumn.ElementStyle>
-                </DataGridTextColumn>
-                <DataGridTextColumn Header="Sv2 (mm)" Binding="{Binding StirrupSpacingV2, StringFormat=F0}" Width="70" IsReadOnly="True">
-                    <DataGridTextColumn.HeaderStyle>
-                        <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource DgHeader}">
-                            <Setter Property="Background" Value="#45402E"/>
-                        </Style>
-                    </DataGridTextColumn.HeaderStyle>
-                    <DataGridTextColumn.ElementStyle>
-                        <Style TargetType="TextBlock" BasedOn="{StaticResource CellCenter}">
-                            <Setter Property="Foreground" Value="#F9E2AF"/>
-                        </Style>
-                    </DataGridTextColumn.ElementStyle>
-                </DataGridTextColumn>
-                <DataGridTextColumn Header="Sv3 (mm)" Binding="{Binding StirrupSpacingV3, StringFormat=F0}" Width="70" IsReadOnly="True">
-                    <DataGridTextColumn.HeaderStyle>
-                        <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource DgHeader}">
-                            <Setter Property="Background" Value="#45402E"/>
-                        </Style>
-                    </DataGridTextColumn.HeaderStyle>
-                    <DataGridTextColumn.ElementStyle>
-                        <Style TargetType="TextBlock" BasedOn="{StaticResource CellCenter}">
-                            <Setter Property="Foreground" Value="#F9E2AF"/>
-                        </Style>
-                    </DataGridTextColumn.ElementStyle>
-                </DataGridTextColumn>
+                <DataGridTextColumn Header="Sv1 (mm)" Binding="{Binding StirrupSpacingV1, StringFormat=F0}" Width="70" IsReadOnly="True"
+                                    HeaderStyle="{StaticResource DgHeader}" ElementStyle="{StaticResource CellCenter}"/>
+                <DataGridTextColumn Header="Sv2 (mm)" Binding="{Binding StirrupSpacingV2, StringFormat=F0}" Width="70" IsReadOnly="True"
+                                    HeaderStyle="{StaticResource DgHeader}" ElementStyle="{StaticResource CellCenter}"/>
+                <DataGridTextColumn Header="Sv3 (mm)" Binding="{Binding StirrupSpacingV3, StringFormat=F0}" Width="70" IsReadOnly="True"
+                                    HeaderStyle="{StaticResource DgHeader}" ElementStyle="{StaticResource CellCenter}"/>
             </DataGrid.Columns>
         </DataGrid>
 
         <!-- Material Selection Panel -->
-        <Border Grid.Row="4" Background="#313244" CornerRadius="8" Padding="12" Margin="0,8,0,8">
+        <Border Grid.Row="4" Background="White" BorderBrush="#CCCCCC" BorderThickness="1" CornerRadius="4" Padding="12" Margin="0,8,0,0">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -355,53 +211,48 @@
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="70"/>
                     <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="130"/>
+                    <ColumnDefinition Width="120"/>
                     <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="130"/>
+                    <ColumnDefinition Width="120"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="60"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Grid.Column="0" Text="🏗️ Bê tông:" Style="{StaticResource LabelText}" Margin="0,0,8,0"/>
+                <TextBlock Grid.Column="0" Text="Bê tông:" Style="{StaticResource LabelText}" Margin="0,0,8,0"/>
                 <ComboBox Grid.Column="1" Name="cmbConcrete" Style="{StaticResource ModernComboBox}"
                           ItemsSource="{Binding ConcreteList}" SelectedItem="{Binding SelectedConcrete, Mode=TwoWay}" DisplayMemberPath="Name"/>
 
-                <TextBlock Grid.Column="2" Text="⚙️ Thép dọc:" Style="{StaticResource LabelText}" Margin="15,0,8,0"/>
+                <TextBlock Grid.Column="2" Text="Thép dọc:" Style="{StaticResource LabelText}" Margin="15,0,8,0"/>
                 <ComboBox Grid.Column="3" Name="cmbRebarLong" Style="{StaticResource ModernComboBox}"
                           ItemsSource="{Binding RebarList}" SelectedItem="{Binding SelectedRebarLongitudinal, Mode=TwoWay}" DisplayMemberPath="Name"/>
 
-                <TextBlock Grid.Column="4" Text="ξᵣ:" Style="{StaticResource LabelText}" Margin="15,0,6,0" FontStyle="Italic"/>
+                <TextBlock Grid.Column="4" Text="ksi:" Style="{StaticResource LabelText}" Margin="15,0,6,0"/>
                 <TextBox Grid.Column="5" Style="{StaticResource ModernTextBox}" Text="{Binding KsiRDisplay, Mode=OneWay}" 
-                         IsReadOnly="True" HorizontalContentAlignment="Center" Foreground="#89B4FA" FontWeight="Bold"/>
+                         IsReadOnly="True" HorizontalContentAlignment="Center" Background="#F0F0F0"/>
 
-                <TextBlock Grid.Column="6" Text="αᵣ:" Style="{StaticResource LabelText}" Margin="10,0,6,0" FontStyle="Italic"/>
+                <TextBlock Grid.Column="6" Text="alpha:" Style="{StaticResource LabelText}" Margin="10,0,6,0"/>
                 <TextBox Grid.Column="7" Style="{StaticResource ModernTextBox}" Text="{Binding AlphaRDisplay, Mode=OneWay}" 
-                         IsReadOnly="True" HorizontalContentAlignment="Center" Foreground="#F38BA8" FontWeight="Bold"/>
+                         IsReadOnly="True" HorizontalContentAlignment="Center" Background="#F0F0F0"/>
 
-                <TextBlock Grid.Column="8" Text="Ø Đai:" Style="{StaticResource LabelText}" Margin="15,0,6,0" Foreground="#CBA6F7"/>
+                <TextBlock Grid.Column="8" Text="D đai:" Style="{StaticResource LabelText}" Margin="15,0,6,0"/>
                 <ComboBox Grid.Column="9" Name="cmbStirrup" Style="{StaticResource ModernComboBox}"
                           ItemsSource="{Binding StirrupDiameterList}" SelectedItem="{Binding SelectedStirrupType, Mode=TwoWay}"/>
 
-                <TextBlock Grid.Column="10" Text="Loại đai:" Style="{StaticResource LabelText}" Margin="10,0,6,0" Foreground="#CBA6F7"/>
+                <TextBlock Grid.Column="10" Text="Thép đai:" Style="{StaticResource LabelText}" Margin="10,0,6,0"/>
                 <ComboBox Grid.Column="11" Name="cmbStirrupMat" Style="{StaticResource ModernComboBox}"
                           ItemsSource="{Binding RebarList}" SelectedItem="{Binding SelectedStirrupMaterial, Mode=TwoWay}" DisplayMemberPath="Name"/>
 
                 <TextBlock Grid.Column="12" Text="a=" Style="{StaticResource LabelText}" Margin="15,0,4,0"/>
                 <TextBox Grid.Column="13" Style="{StaticResource ModernTextBox}"
                          Text="{Binding ProtectiveLayer, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Center"/>
-                <TextBlock Grid.Column="14" Text="mm" Style="{StaticResource LabelText}" Margin="4,0,0,0" Foreground="#6C7086"/>
+                <TextBlock Grid.Column="14" Text="mm" Style="{StaticResource LabelText}" Margin="4,0,0,0" Foreground="#666666"/>
 
-                <Button Grid.Column="15" Name="btnCalculate" Content="⚡ TÍNH THÉP" Background="#F38BA8" Foreground="#1E1E2E"
+                <Button Grid.Column="15" Name="btnCalculate" Content="TÍNH THÉP" Background="#D0021B"
                         Style="{StaticResource ModernButton}" Click="BtnCalculateRebar_Click" 
-                        HorizontalAlignment="Right" FontSize="14" FontWeight="Bold" Padding="20,8"/>
+                        HorizontalAlignment="Right" FontSize="13" FontWeight="Bold" Padding="15,8"/>
             </Grid>
-        </Border>
-
-        <!-- Status Bar -->
-        <Border Grid.Row="5" Background="#313244" CornerRadius="6" Padding="10,6">
-            <TextBlock Name="txtStatus" Text="Sẵn sàng - Nhấn 'Kết nối ETABS' để bắt đầu" FontSize="11" Foreground="#A6ADC8"/>
         </Border>
     </Grid>
 </Window>

@@ -109,7 +109,7 @@
                     </Grid>
                 </GroupBox>
 
-                <Button Content="KẾT NỐI" Command="{Binding RefreshCombosCommand}" FontWeight="Bold" Padding="15" Margin="0,15,0,0" Background="#3B82F6" Foreground="White"/>
+                <Button Content="KẾT NỐI" Command="{Binding RefreshCombosCommand}" FontWeight="Bold" Padding="15" Margin="0,15,0,0" Background="#3B82F6" Foreground="White" Click="Button_Click"/>
             </StackPanel>
         </ScrollViewer>
 
