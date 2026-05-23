@@ -1,0 +1,107 @@
+<Window x:Class="ShopDrawings_BEAM.Views.MainView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ShopDrawings_BEAM.Views"
+        mc:Ignorable="d"
+        Title="Quản lý Family - Bản Vẽ Dầm" Height="600" Width="1000"
+        WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <!-- Style cơ bản cho TextBlock và ComboBox -->
+        <Style TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Margin" Value="0,10,0,5" />
+            <Setter Property="Foreground" Value="#333333" />
+        </Style>
+        <Style TargetType="ComboBox">
+            <Setter Property="Height" Value="28" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Padding" Value="5,0,0,0" />
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="Height" Value="35" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Background" Value="#007ACC" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Margin" Value="0,20,0,0" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="15">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="15" /> <!-- Khoảng cách / Splitter -->
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Cột 1: Bản vẽ dọc dầm -->
+        <GroupBox Grid.Column="0" Header="Thông tin Family - Bản vẽ dọc dầm" FontWeight="Bold" FontSize="15" Padding="15">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <TextBlock Text="Family Title Block (Khung tên):" />
+                    <ComboBox />
+
+                    <TextBlock Text="Family View Template:" />
+                    <ComboBox />
+                    
+                    <TextBlock Text="Tag Thép chủ:" />
+                    <ComboBox />
+
+                    <TextBlock Text="Tag Thép đai:" />
+                    <ComboBox />
+
+                    <TextBlock Text="Dimension Type (Kích thước):" />
+                    <ComboBox />
+
+                    <TextBlock Text="Family Level / Grid:" />
+                    <ComboBox />
+
+                    <Button Content="Lưu thiết lập dọc dầm" />
+                </StackPanel>
+            </ScrollViewer>
+        </GroupBox>
+
+        <!-- Splitter -->
+        <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Center" VerticalAlignment="Stretch" Background="#E0E0E0" ShowsPreview="True"/>
+
+        <!-- Cột 2: Mặt cắt dầm -->
+        <GroupBox Grid.Column="2" Header="Thông tin Family - Mặt cắt dầm" FontWeight="Bold" FontSize="15" Padding="15">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel >
+                    <TextBlock Text="Family View Section:" />
+                    <ComboBox />
+
+                    <TextBlock Text="Family View Template (Mặt cắt):" />
+                    <ComboBox />
+
+                    <TextBlock Text="Detail Item (Mặt cắt Thép chủ):" />
+                    <ComboBox />
+
+                    <TextBlock Text="Detail Item (Mặt cắt Thép đai):" />
+                    <ComboBox />
+                    
+                    <TextBlock Text="Tag Thép mặt cắt:" />
+                    <ComboBox />
+
+                    <TextBlock Text="Dimension Type (Mặt cắt):" />
+                    <ComboBox />
+
+                    <Button Content="Lưu thiết lập mặt cắt" />
+                </StackPanel>
+            </ScrollViewer>
+        </GroupBox>
+    </Grid>
+</Window>

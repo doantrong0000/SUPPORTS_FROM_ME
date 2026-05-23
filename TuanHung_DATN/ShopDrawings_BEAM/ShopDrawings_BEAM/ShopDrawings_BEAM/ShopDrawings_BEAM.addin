@@ -1,0 +1,14 @@
+<RevitAddIns>
+    <AddIn Type="Application">
+        <Name>ShopDrawings_BEAM</Name>
+        <Assembly>ShopDrawings_BEAM\ShopDrawings_BEAM.dll</Assembly>
+        <AddInId>521ABBE8-63F4-4DBD-BEDC-DE8A31C5FB7D</AddInId>
+        <FullClassName>ShopDrawings_BEAM.Application</FullClassName>
+        <VendorId>Development</VendorId>
+        <VendorDescription></VendorDescription>
+    </AddIn>
+    <ManifestSettings>
+        <UseRevitContext>False</UseRevitContext>
+        <ContextName>ShopDrawings_BEAM</ContextName>
+    </ManifestSettings>
+</RevitAddIns>
