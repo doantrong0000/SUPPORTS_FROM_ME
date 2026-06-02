@@ -11,6 +11,8 @@ namespace DATN_AUTO_CREATE_PART.ViewModels
 {
     public partial class MainViewModel : ObservableObject
     {
+        // --- Các danh sách (Collections) dùng để liên kết dữ liệu với giao diện (UI) ---
+        // Sử dụng ObservableCollection giúp UI tự động cập nhật khi có sự thay đổi (thêm/xóa)
         [ObservableProperty]
         private ObservableCollection<BeamInfoCollection> _beamCollections = new ObservableCollection<BeamInfoCollection>();
 
@@ -20,15 +22,18 @@ namespace DATN_AUTO_CREATE_PART.ViewModels
         [ObservableProperty]
         private ObservableCollection<FloorInfoCollection> _floorCollections = new ObservableCollection<FloorInfoCollection>();
 
+        // Lưu trữ thông tin thiết lập cho Lưới trục (Grid)
         [ObservableProperty]
         private GridInfo _gridSettings = new GridInfo();
 
-        // --- Layer Filters (comma-separated keywords) ---
+        // --- Bộ lọc Layer (Layer Filters) ---
+        // Cho phép người dùng thiết lập các từ khóa để nhận diện cấu kiện theo layer trong AutoCAD (ngăn cách bởi dấu phẩy)
         [ObservableProperty]
         private string _beamLayerFilter = "beam, dam, frame";
 
         [ObservableProperty]
         private string _columnLayerFilter = "col, cot";
+
 
         [ObservableProperty]
         private string _floorLayerFilter = "slab, san, floor";
@@ -36,8 +41,10 @@ namespace DATN_AUTO_CREATE_PART.ViewModels
         [ObservableProperty]
         private string _gridLayerFilter = "grid, axis, truc";
 
+        // Đối tượng Model chính để tương tác với Tekla Structures API
         private TSM.Model _model;
 
+        // Hàm khởi tạo: Thiết lập kết nối model Tekla và xóa dữ liệu cũ trong các danh sách
         public MainViewModel()
         {
             _model = new TSM.Model();
@@ -47,14 +54,17 @@ namespace DATN_AUTO_CREATE_PART.ViewModels
         }
 
         // =====================================================
-        // ORIGIN PICKING - Logic Separation
+        // XỬ LÝ ĐIỂM GỐC (ORIGIN PICKING) - Tách biệt Logic
         // =====================================================
 
+        // Biến lưu điểm gốc trong hệ tọa độ của CAD
         private XyzData _cadOrigin;
+        // Biến lưu điểm gốc trong hệ tọa độ của Tekla
         private Tekla.Structures.Geometry3d.Point _teklaOrigin;
 
         /// <summary>
         /// Retrieves the origin point from AutoCAD (once per session).
+        /// Yêu cầu lấy điểm gốc từ AutoCAD. Nếu đã có thì dùng lại, nếu chưa thì gọi API CAD để người dùng chọn.
         /// </summary>
         private XyzData RequireCadOrigin()
         {
@@ -74,6 +84,7 @@ namespace DATN_AUTO_CREATE_PART.ViewModels
 
         /// <summary>
         /// Retrieves the origin point from Tekla (once per session).
+        /// Yêu cầu lấy điểm gốc từ Tekla. Nếu chưa có, sẽ kích hoạt công cụ Picker để người dùng click chọn trong Tekla.
         /// </summary>
         private Tekla.Structures.Geometry3d.Point RequireTeklaOrigin()
         {
@@ -96,6 +107,7 @@ namespace DATN_AUTO_CREATE_PART.ViewModels
             }
         }
 
+        // Lệnh được gọi từ UI (Command) để ép chọn lại điểm gốc trong CAD
         [RelayCommand]
         private void SetCadOrigin()
         {
@@ -107,6 +119,7 @@ namespace DATN_AUTO_CREATE_PART.ViewModels
             }
         }
 
+        // Lệnh được gọi từ UI (Command) để ép chọn lại điểm gốc trong Tekla
         [RelayCommand]
         private void SetTeklaOrigin()
         {
@@ -126,6 +139,7 @@ namespace DATN_AUTO_CREATE_PART.ViewModels
 
         /// <summary>
         /// Validates Tekla connection status.
+        /// Hàm kiểm tra xem phần mềm Tekla có đang mở và có kết nối được Model hay không.
         /// </summary>
         private bool EnsureTeklaConnection()
         {
@@ -142,21 +156,25 @@ namespace DATN_AUTO_CREATE_PART.ViewModels
         }
 
         // =====================================================
-        // SCAN CAD - Each scan operation requires CAD origin
+        // QUÉT DỮ LIỆU TỪ CAD - Mỗi thao tác quét đều yêu cầu phải có điểm gốc CAD
         // =====================================================
 
+        // Lệnh quét Dầm từ CAD
         [RelayCommand]
         private void ScanCadBeams()
         {
+            // Bước 1: Yêu cầu điểm gốc CAD
             var cadOrigin = RequireCadOrigin();
             if (cadOrigin == null) return;
 
-            // Step 2: Extract data from CAD
+            // Bước 2: Gọi hàm trích xuất Dầm từ AutoCAD, dùng bộ lọc Layer cấu hình sẵn
             AutoCadInterop.ExtractBeams(out var extractedBeams, cadOrigin, BeamLayerFilter);
 
+            // Bước 3: Nhóm các dầm có cùng tên (text) lại với nhau
             var grouped = extractedBeams.GroupBy(x => x.Text);
             BeamCollections.Clear();
 
+            // Duyệt qua từng nhóm Dầm và thêm vào bộ sưu tập hiển thị lên giao diện UI
             foreach (var group in grouped)
             {
                 var col = new BeamInfoCollection
@@ -164,15 +182,17 @@ namespace DATN_AUTO_CREATE_PART.ViewModels
                     Text = group.Key,
                     Number = group.Count()
                 };
-                
-                foreach(var b in group)
+
+                foreach (var b in group)
                 {
                     col.BeamInfos.Add(new BeamInfo(b.StartPoint, b.EndPoint, b.Text));
                 }
-                
+
+                // Lọc bỏ các dầm bị trùng lặp tọa độ
                 col.BeamInfos = col.BeamInfos.Distinct(new BeamInfo.BeamInfoComparerByPoint()).ToList();
                 col.Number = col.BeamInfos.Count;
 
+                // Cập nhật thông số Rộng (Width) và Cao (Height) cho nhóm dựa vào phần tử đầu tiên
                 if (col.BeamInfos.Any())
                 {
                     col.Width = col.BeamInfos.First().Width;
@@ -183,19 +203,21 @@ namespace DATN_AUTO_CREATE_PART.ViewModels
             }
         }
 
+        // Lệnh quét Cột từ CAD
         [RelayCommand]
         private void ScanCadColumns()
         {
             var cadOrigin = RequireCadOrigin();
             if (cadOrigin == null) return;
 
+            // Trích xuất dữ liệu Cột từ AutoCAD
             AutoCadInterop.ExtractColumns(out var extractedColumns, cadOrigin, ColumnLayerFilter);
 
             var allColumnInfos = extractedColumns.Select(c => new ColumnInfo(c.Points, c.Mask)).ToList();
-            
-            // Group by dimensions (Width and Height)
+
+            // Nhóm Cột theo kích thước (Rộng x Cao)
             var grouped = allColumnInfos.GroupBy(c => new { c.Width, c.Height });
-            
+
             ColumnCollections.Clear();
 
             foreach (var group in grouped)
@@ -205,32 +227,35 @@ namespace DATN_AUTO_CREATE_PART.ViewModels
                     Width = group.Key.Width,
                     Height = group.Key.Height,
                     Text = $"{group.Key.Width}x{group.Key.Height}",
-                    Number = group.Count()
+                    Number = group.Count() // Số lượng cột trong nhóm
                 };
 
-                foreach(var c in group)
+                foreach (var c in group)
                 {
                     col.ColumnInfos.Add(c);
                 }
 
-                // Ensure unique entries if needed, though they should be distinct by Center already
+                // Đảm bảo không bị trùng lặp các cột (Dựa vào Distinct của ColumnInfo)
                 col.ColumnInfos = col.ColumnInfos.Distinct().ToList();
                 col.Number = col.ColumnInfos.Count;
-                
+
                 ColumnCollections.Add(col);
             }
         }
 
+        // Lệnh quét Sàn từ CAD
         [RelayCommand]
         private void ScanCadFloors()
         {
             var cadOrigin = RequireCadOrigin();
             if (cadOrigin == null) return;
 
+            // Trích xuất dữ liệu Sàn (thường là các đường Polyline kín) từ AutoCAD
             AutoCadInterop.ExtractFloors(out var extractedFloors, cadOrigin, FloorLayerFilter);
 
             FloorCollections.Clear();
 
+            // Đưa dữ liệu sàn vừa quét được vào danh sách hiển thị
             foreach (var floor in extractedFloors)
             {
                 var col = new FloorInfoCollection
@@ -243,12 +268,14 @@ namespace DATN_AUTO_CREATE_PART.ViewModels
             }
         }
 
+        // Lệnh quét Lưới trục từ CAD
         [RelayCommand]
         private void ScanCadGrids()
         {
             var cadOrigin = RequireCadOrigin();
             if (cadOrigin == null) return;
 
+            // Trích xuất khoảng cách và nhãn của lưới trục từ AutoCAD
             AutoCadInterop.ExtractGrids(out string cX, out string cY, out string lX, out string lY, cadOrigin, GridLayerFilter);
             if (cX != "0" || cY != "0")
             {
@@ -260,18 +287,21 @@ namespace DATN_AUTO_CREATE_PART.ViewModels
         }
 
         // =====================================================
-        // GENERATE TEKLA - Requires both CAD and Tekla origins
+        // TẠO MÔ HÌNH BÊN TEKLA - Yêu cầu điểm gốc của cả CAD và Tekla
         // =====================================================
 
+        // Lệnh tạo Lưới trục trong Tekla
         [RelayCommand]
         private void GenerateGridToTekla()
         {
+            // Kiểm tra xem Tekla đã kết nối chưa
             if (!EnsureTeklaConnection()) return;
 
+            // Lấy điểm gốc chèn vào Tekla
             var teklaOrigin = RequireTeklaOrigin();
             if (teklaOrigin == null) return;
 
-            // Step 2: Generate grid
+            // Gọi API TeklaInterop để tạo lưới trục với các cài đặt (GridSettings)
             TeklaInterop.GenerateStandardGrid(teklaOrigin, GridSettings);
             System.Windows.MessageBox.Show(
                 "Grid generated successfully!",
@@ -280,11 +310,13 @@ namespace DATN_AUTO_CREATE_PART.ViewModels
                 System.Windows.MessageBoxImage.Information);
         }
 
+        // Lệnh tạo các cấu kiện (Dầm, Cột, Sàn) trong Tekla
         [RelayCommand]
         private void GenerateComponentsToTekla()
         {
             if (!EnsureTeklaConnection()) return;
 
+            // Bắt buộc phải có tọa độ gốc của CAD để tính toán dịch chuyển tương đối
             if (_cadOrigin == null)
             {
                 System.Windows.MessageBox.Show(
@@ -295,10 +327,11 @@ namespace DATN_AUTO_CREATE_PART.ViewModels
                 return;
             }
 
+            // Lấy điểm gốc Tekla để chèn mô hình
             var teklaOrigin = RequireTeklaOrigin();
             if (teklaOrigin == null) return;
 
-            // Generate components using the separated origins
+            // Lần lượt gọi hàm tạo Dầm, Cột, Sàn trong Tekla dựa trên dữ liệu đã quét và khoảng cách giữa 2 điểm gốc
             TeklaInterop.GenerateBeams(BeamCollections, _cadOrigin, teklaOrigin);
             TeklaInterop.GenerateColumns(ColumnCollections, _cadOrigin, teklaOrigin);
             TeklaInterop.GenerateFloors(FloorCollections, _cadOrigin, teklaOrigin);

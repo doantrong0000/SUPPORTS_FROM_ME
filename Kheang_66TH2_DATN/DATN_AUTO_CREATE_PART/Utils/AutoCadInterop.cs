@@ -85,11 +85,7 @@ namespace DATN_AUTO_CREATE_PART.Utils
                     if (s.EntityName == "AcDbText" || s.EntityName == "AcDbMText") 
                     {
                         string t = CleanCadText(s.TextString);
-                        // Beams require "bXh" format in text to be valid dimension labels
-                        if (System.Text.RegularExpressions.Regex.IsMatch(t, @"\d+\s*[xX*]\s*\d+"))
-                        {
-                            listText.Add(s);
-                        }
+                        listText.Add(s);
                         continue;
                     }
 
@@ -112,21 +108,102 @@ namespace DATN_AUTO_CREATE_PART.Utils
                     } catch { }
                 }
 
+                // Lớp phụ để hỗ trợ tính toán đường song song
+                var parsedLines = new List<dynamic>();
                 foreach (var line in listLine)
                 {
                     try
                     {
-                        dynamic startpointarr = line.StartPoint;
-                        dynamic endpointarr = line.EndPoint;
+                        dynamic sp = line.StartPoint;
+                        dynamic ep = line.EndPoint;
+                        XyzData p1 = new XyzData((double)sp[0], (double)sp[1], 0);
+                        XyzData p2 = new XyzData((double)ep[0], (double)ep[1], 0);
+                        double length = p1.DistanceTo(p2);
+                        if (length < 10) continue; // Bỏ qua nét quá ngắn
+                        
+                        double dx = (p2.X - p1.X) / length;
+                        double dy = (p2.Y - p1.Y) / length;
+                        
+                        parsedLines.Add(new 
+                        { 
+                            Start = p1, 
+                            End = p2, 
+                            Length = length,
+                            Mid = new XyzData((p1.X + p2.X) / 2, (p1.Y + p2.Y) / 2, 0),
+                            DirX = dx,
+                            DirY = dy
+                        });
+                    }
+                    catch { }
+                }
 
-                        var startpoint = new XyzData((double)startpointarr[0], (double)startpointarr[1], (double)startpointarr[2]);
-                        var endpoint = new XyzData((double)endpointarr[0], (double)endpointarr[1], (double)endpointarr[2]);
+                var usedLines = new HashSet<int>();
+                for (int i = 0; i < parsedLines.Count; i++)
+                {
+                    if (usedLines.Contains(i)) continue;
+                    var l1 = parsedLines[i];
+                    
+                    int bestMatchIdx = -1;
+                    double minCenterDist = double.MaxValue;
 
+                    for (int j = i + 1; j < parsedLines.Count; j++)
+                    {
+                        if (usedLines.Contains(j)) continue;
+                        var l2 = parsedLines[j];
+
+                        // Kiểm tra chiều dài bằng nhau (cho phép sai số nhỏ)
+                        if (Math.Abs(l1.Length - l2.Length) > 10.0) continue;
+
+                        // Kiểm tra song song (Tích vô hướng của 2 vector hướng ~ 1 hoặc -1)
+                        double dot = l1.DirX * l2.DirX + l1.DirY * l2.DirY;
+                        if (Math.Abs(Math.Abs(dot) - 1.0) > 0.05) continue; // Không song song
+
+                        // Kiểm tra tính đối xứng (vector nối 2 trung điểm phải vuông góc với hướng dầm)
+                        double dx = l2.Mid.X - l1.Mid.X;
+                        double dy = l2.Mid.Y - l1.Mid.Y;
+                        double midDist = Math.Sqrt(dx * dx + dy * dy);
+
+                        if (midDist < 50 || midDist > 2000) continue; // Dầm thường rộng từ 50 đến 2000mm
+
+                        double midDot = Math.Abs((dx * l1.DirX + dy * l1.DirY) / midDist);
+                        if (midDot > 0.2) continue; // Không vuông góc
+
+                        if (midDist < minCenterDist)
+                        {
+                            minCenterDist = midDist;
+                            bestMatchIdx = j;
+                        }
+                    }
+
+                    if (bestMatchIdx != -1)
+                    {
+                        var l2 = parsedLines[bestMatchIdx];
+                        usedLines.Add(i);
+                        usedLines.Add(bestMatchIdx);
+
+                        XyzData centerStart, centerEnd;
+                        // Xác định 2 đường có cùng chiều vẽ hay ngược chiều
+                        double distSS = l1.Start.DistanceTo(l2.Start);
+                        double distSE = l1.Start.DistanceTo(l2.End);
+
+                        if (distSS < distSE)
+                        {
+                            centerStart = new XyzData((l1.Start.X + l2.Start.X) / 2, (l1.Start.Y + l2.Start.Y) / 2, 0);
+                            centerEnd = new XyzData((l1.End.X + l2.End.X) / 2, (l1.End.Y + l2.End.Y) / 2, 0);
+                        }
+                        else
+                        {
+                            centerStart = new XyzData((l1.Start.X + l2.End.X) / 2, (l1.Start.Y + l2.End.Y) / 2, 0);
+                            centerEnd = new XyzData((l1.End.X + l2.Start.X) / 2, (l1.End.Y + l2.Start.Y) / 2, 0);
+                        }
+
+                        // Tìm Text (tag) gần nhất với trung tâm dầm
+                        XyzData beamCenter = new XyzData((centerStart.X + centerEnd.X) / 2, (centerStart.Y + centerEnd.Y) / 2, 0);
                         string beamText = "Undefined";
                         if (listpoint.Count > 0)
                         {
-                            var textData = listpoint.OrderBy(x => x.Point.DistanceTo(startpoint)).FirstOrDefault();
-                            if (textData != null)
+                            var textData = listpoint.OrderBy(x => x.Point.DistanceTo(beamCenter)).FirstOrDefault();
+                            if (textData != null && textData.Point.DistanceTo(beamCenter) < 2000)
                             {
                                 beamText = textData.Text;
                             }
@@ -134,11 +211,11 @@ namespace DATN_AUTO_CREATE_PART.Utils
 
                         extractedBeams.Add(new CadBeams()
                         {
-                            StartPoint = startpoint,
-                            EndPoint = endpoint,
+                            StartPoint = centerStart,
+                            EndPoint = centerEnd,
                             Text = beamText
                         });
-                    } catch { }
+                    }
                 }
             }
             catch (Exception ex)
@@ -147,7 +224,7 @@ namespace DATN_AUTO_CREATE_PART.Utils
             }
         }
 
-        public static void ExtractColumns(out List<CadRectangle> extractedColumns, XyzData originPoint, string layerFilter = "")
+        public static void ExtractColumns(out List<CadRectangle> extractedColumns, XyzData originPoint, string layerFilter)
         {
             extractedColumns = new List<CadRectangle>();
             var keywords = ParseLayerKeywords(layerFilter);
@@ -179,7 +256,9 @@ namespace DATN_AUTO_CREATE_PART.Utils
                         continue;
                     }
 
-                    if (!MatchesLayerFilter((string)s.Layer, keywords)) continue;
+                    String layerName = (String)s.Layer;
+
+                    if (!MatchesLayerFilter(layerName, keywords)) continue;
                     
                     if (s.EntityName == "AcDbPolyline") listPolyline.Add(s);
                 }

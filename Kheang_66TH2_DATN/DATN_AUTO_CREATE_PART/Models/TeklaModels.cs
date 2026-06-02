@@ -24,20 +24,10 @@ namespace DATN_AUTO_CREATE_PART.Models
 
         private void ParseDimensionsFromText(string text)
         {
-            // Parse dimensions from text like "(250x400)", "(300x600)", "400x400)", "B250x400" etc.
-            Width = 200;  // fallback defaults
+            // Text is now used as a tag, not for extracting dimensions.
+            // Provide default dimensions that user can edit in the UI.
+            Width = 200;
             Height = 400;
-
-            if (string.IsNullOrWhiteSpace(text)) return;
-
-            var match = System.Text.RegularExpressions.Regex.Match(text, @"(\d+)\s*[xX]\s*(\d+)");
-            if (match.Success)
-            {
-                if (double.TryParse(match.Groups[1].Value, out double w))
-                    Width = w;
-                if (double.TryParse(match.Groups[2].Value, out double h))
-                    Height = h;
-            }
         }
 
         public class BeamInfoComparerByPoint : IEqualityComparer<BeamInfo>

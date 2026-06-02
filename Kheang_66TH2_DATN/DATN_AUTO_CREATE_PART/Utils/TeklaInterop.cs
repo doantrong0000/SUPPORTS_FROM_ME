@@ -39,6 +39,10 @@ namespace DATN_AUTO_CREATE_PART.Utils
                         Name = collection.Text
                     };
 
+
+                    teklaBeam.Position.Depth = Position.DepthEnum.FRONT;
+
+
                     teklaBeam.Insert();
                 }
             }
