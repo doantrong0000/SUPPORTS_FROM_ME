@@ -127,9 +127,8 @@ namespace Calculator_Foundation_Etabs_API.ViewModels
         {
             public string StripName { get; set; }
             public double Station { get; set; }
-            public double X { get; set; }
-            public double Y { get; set; }
             public double M3 { get; set; }
+            public double V2 { get; set; }
         }
 
         private struct InternalForces
@@ -157,20 +156,7 @@ namespace Calculator_Foundation_Etabs_API.ViewModels
             return isInside;
         }
 
-        private static bool IsPointOnSegment(double px, double py, double x1, double y1, double x2, double y2, double tolerance = 0.2)
-        {
-            double apx = px - x1, apy = py - y1, abx = x2 - x1, aby = y2 - y1;
-            double ab2 = abx * abx + aby * aby;
-            if (ab2 == 0) return false;
 
-            double t = (apx * abx + apy * aby) / ab2;
-            if (t < -0.1 || t > 1.1) return false;
-
-            t = Math.Max(0, Math.Min(1, t));
-            double cx = x1 + t * abx, cy = y1 + t * aby;
-            double dx = px - cx, dy = py - cy;
-            return (dx * dx + dy * dy) <= (tolerance * tolerance);
-        }
 
         // ==========================================
         // 3. CÁC HÀM TƯƠNG TÁC ETABS (API EXTRACTION)
@@ -278,28 +264,28 @@ namespace Calculator_Foundation_Etabs_API.ViewModels
             if (mySapModel.DatabaseTables.GetTableForDisplayArray("Strip Forces", ref fieldKeyList, "", ref tableVersion, ref fieldsKeysIncluded, ref numberRecords, ref tableData) == 0 && numberRecords > 0)
             {
                 int numCols = fieldsKeysIncluded.Length;
-                int idxStrip = Array.FindIndex(fieldsKeysIncluded, col => col.Trim().Equals("Strip", StringComparison.OrdinalIgnoreCase) || col.Trim().Equals("Strip Name", StringComparison.OrdinalIgnoreCase));
+                int idxStrip = Array.FindIndex(fieldsKeysIncluded, col => col.Trim().Equals("StripObject", StringComparison.OrdinalIgnoreCase) || col.Trim().Equals("Strip", StringComparison.OrdinalIgnoreCase) || col.Trim().Equals("Strip Name", StringComparison.OrdinalIgnoreCase));
                 int idxStation = Array.FindIndex(fieldsKeysIncluded, col => col.Trim().Equals("Station", StringComparison.OrdinalIgnoreCase));
                 int idxM3 = Array.FindIndex(fieldsKeysIncluded, col => col.Trim().Equals("M3", StringComparison.OrdinalIgnoreCase) || col.Trim().Equals("Moment", StringComparison.OrdinalIgnoreCase));
-                int idxX = Array.FindIndex(fieldsKeysIncluded, col => col.Trim().Equals("X", StringComparison.OrdinalIgnoreCase) || col.Trim().StartsWith("X ", StringComparison.OrdinalIgnoreCase));
-                int idxY = Array.FindIndex(fieldsKeysIncluded, col => col.Trim().Equals("Y", StringComparison.OrdinalIgnoreCase) || col.Trim().StartsWith("Y ", StringComparison.OrdinalIgnoreCase));
+                int idxV2 = Array.FindIndex(fieldsKeysIncluded, col => col.Trim().Equals("V2", StringComparison.OrdinalIgnoreCase) || col.Trim().Equals("Shear", StringComparison.OrdinalIgnoreCase));
 
-                if (idxStrip != -1 && idxStation != -1 && idxM3 != -1 && idxX != -1 && idxY != -1)
+                if (idxStrip != -1 && idxStation != -1 && idxM3 != -1)
                 {
                     for (int i = 0; i < numberRecords; i++)
                     {
                         double.TryParse(tableData[i * numCols + idxStation], NumberStyles.Any, CultureInfo.InvariantCulture, out double st);
-                        double.TryParse(tableData[i * numCols + idxX], NumberStyles.Any, CultureInfo.InvariantCulture, out double x);
-                        double.TryParse(tableData[i * numCols + idxY], NumberStyles.Any, CultureInfo.InvariantCulture, out double y);
                         double.TryParse(tableData[i * numCols + idxM3], NumberStyles.Any, CultureInfo.InvariantCulture, out double m3);
+                        double v2 = 0;
+                        if (idxV2 != -1) double.TryParse(tableData[i * numCols + idxV2], NumberStyles.Any, CultureInfo.InvariantCulture, out v2);
+
+                        string stripName = tableData[i * numCols + idxStrip].Trim();
 
                         stripForces.Add(new StripForcePoint
                         {
-                            StripName = tableData[i * numCols + idxStrip].Trim(),
+                            StripName = stripName,
                             Station = st,
-                            X = x,
-                            Y = y,
-                            M3 = m3
+                            M3 = m3,
+                            V2 = v2
                         });
                     }
                 }
@@ -349,21 +335,33 @@ namespace Calculator_Foundation_Etabs_API.ViewModels
         private static InternalForces ExtractStripForces(List<StripForcePoint> allStripForces, FrameData frame)
         {
             var res = new InternalForces();
-            var overlappingPoints = allStripForces.Where(s => IsPointOnSegment(s.X, s.Y, frame.X1, frame.Y1, frame.X2, frame.Y2)).ToList();
+            
+            // TÌM THEO TÊN (Do người dùng đã đặt tên Dầm và Strip giống hệt nhau)
+            var overlappingPoints = allStripForces.Where(s => 
+                s.StripName.Equals(frame.Name, StringComparison.OrdinalIgnoreCase)
+            ).ToList();
 
             if (overlappingPoints.Any())
             {
                 var targetStripGroup = overlappingPoints.GroupBy(s => s.StripName).OrderByDescending(g => g.Count()).First();
                 var stripData = targetStripGroup.OrderBy(s => s.Station).ToList();
 
-                res.Start = Math.Abs(stripData.First().M3);
-                res.End = Math.Abs(stripData.Last().M3);
+                // Lọc bỏ các giá trị Momen = 0 ở 2 đầu do ETABS xuất ra
+                var validPoints = stripData.Where(s => Math.Abs(s.M3) > 0.001).ToList();
 
-                if (stripData.Count > 2)
+                if (validPoints.Any())
                 {
-                    for (int k = 1; k < stripData.Count - 1; k++)
+                    res.Start = Math.Abs(validPoints.First().M3);
+                    res.End = Math.Abs(validPoints.Last().M3);
+                    res.MaxShear = validPoints.Max(p => Math.Abs(p.V2));
+
+                    // Lấy giá trị lớn nhất trong đoạn giữa
+                    if (validPoints.Count > 2)
                     {
-                        if (Math.Abs(stripData[k].M3) > res.Mid) res.Mid = Math.Abs(stripData[k].M3);
+                        for (int k = 1; k < validPoints.Count - 1; k++)
+                        {
+                            if (Math.Abs(validPoints[k].M3) > res.Mid) res.Mid = Math.Abs(validPoints[k].M3);
+                        }
                     }
                 }
             }
@@ -393,22 +391,29 @@ namespace Calculator_Foundation_Etabs_API.ViewModels
                 // 3. Xử lý từng Dầm
                 foreach (var frame in baseFrames)
                 {
+                    var overlappingPoints = allStripForces.Where(s => 
+                        s.StripName.Equals(frame.Name, StringComparison.OrdinalIgnoreCase) || 
+                        s.StripName.Contains(frame.Name) ||
+                        frame.Name.Contains(s.StripName)).ToList();
+                    
                     // Lấy hình học
                     GetFrameDimensions(mySapModel, frame, baseSlabs, out double B, out double H);
-                    var foundation = new FoundationModel { Name = $"Móng {frame.Name}", Length = frame.Length, B = B, Bd = B, H = H, Hd = H };
+                    var foundation = new FoundationModel { Name = frame.Name, Length = frame.Length, B = B, Bd = B, H = H, Hd = H };
 
                     // Lấy Nội lực Dầm
                     var frameForces = ExtractFrameForces(mySapModel, frame.Name);
                     foundation.MBot_Start = frameForces.Start;
                     foundation.MTop_Mid = frameForces.Mid;
                     foundation.MBot_End = frameForces.End;
-                    foundation.Q_Max = frameForces.MaxShear;
 
                     // Lấy Nội lực Strip
                     var stripForces = ExtractStripForces(allStripForces, frame);
                     foundation.MStrip_Start = stripForces.Start;
                     foundation.MStrip_Mid = stripForces.Mid;
                     foundation.MStrip_End = stripForces.End;
+                    
+                    // Lấy Q_Max từ Strip (hoặc Dầm nếu Strip không có)
+                    foundation.Q_Max = Math.Max(frameForces.MaxShear, stripForces.MaxShear);
 
                     resultList.Add(foundation);
                 }

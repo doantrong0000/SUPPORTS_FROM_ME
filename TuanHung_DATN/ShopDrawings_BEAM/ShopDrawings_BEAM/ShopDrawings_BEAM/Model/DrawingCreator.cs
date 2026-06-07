@@ -30,6 +30,11 @@ namespace ShopDrawings_BEAM.Model
                 throw new Exception("Chưa chọn Section View Type!");
             }
 
+            if (viewModel.SelectedDetailViewType == null)
+            {
+                throw new Exception("Chưa chọn Detail View Type!");
+            }
+
             // Phân tích tỷ lệ bản vẽ
             double scaleValue = 50;
             if (!string.IsNullOrEmpty(viewModel.SelectedViewScale) && viewModel.SelectedViewScale.Contains(":"))
@@ -57,66 +62,91 @@ namespace ShopDrawings_BEAM.Model
 
                 // Đặt lên Sheet tại nửa dưới
                 XYZ position = new XYZ(0.7, 0.35, 0);
-                Viewport.Create(doc, sheet.Id, longView.Id, position);
+                Viewport vp = Viewport.Create(doc, sheet.Id, longView.Id, position);
+                if (viewModel.SelectedLongitudinalViewportType != null)
+                {
+                    vp.ChangeTypeId(viewModel.SelectedLongitudinalViewportType.Id);
+                }
             }
 
-            // 3. Tạo đúng 3 mặt cắt ngang dọc theo đường dầm liên tục: Gối Trái (15%), Giữa Nhịp (50%), Gối Phải (85%)
+            // 3. Sắp xếp dầm dọc theo trục collinear và tạo 3 mặt cắt ngang (0.1, 0.5, 0.9) cho từng dầm riêng biệt
             viewModel.CreatedCrossSections.Clear();
-            
+
             Line firstBeamLine = GetBeamLine(viewModel.SelectedBeams[0]);
             if (firstBeamLine != null)
             {
                 XYZ p0 = firstBeamLine.GetEndPoint(0);
-                XYZ dir = firstBeamLine.Direction.Normalize();
+                XYZ mainDir = firstBeamLine.Direction.Normalize();
 
-                double minT = double.MaxValue;
-                double maxT = double.MinValue;
+                // Sắp xếp các dầm theo thứ tự dọc theo trục chính
+                var sortedBeams = viewModel.SelectedBeams
+                    .OrderBy(b => {
+                        Line l = GetBeamLine(b);
+                        if (l == null) return 0.0;
+                        return (l.GetEndPoint(0) - p0).DotProduct(mainDir);
+                    })
+                    .ToList();
 
-                foreach (var beam in viewModel.SelectedBeams)
+                var crossConfig = new[]
                 {
+                    new { Name = "Gối Trái", Ratio = 0.1 },
+                    new { Name = "Giữa Nhịp", Ratio = 0.5 },
+                    new { Name = "Gối Phải", Ratio = 0.9 }
+                };
+
+                for (int beamIndex = 0; beamIndex < sortedBeams.Count; beamIndex++)
+                {
+                    var beam = sortedBeams[beamIndex];
                     Line line = GetBeamLine(beam);
                     if (line == null) continue;
 
                     XYZ pStart = line.GetEndPoint(0);
                     XYZ pEnd = line.GetEndPoint(1);
+                    XYZ beamDir = line.Direction.Normalize();
+                    double segmentLength = pStart.DistanceTo(pEnd);
 
-                    double tStart = (pStart - p0).DotProduct(dir);
-                    double tEnd = (pEnd - p0).DotProduct(dir);
-
-                    minT = Math.Min(minT, Math.Min(tStart, tEnd));
-                    maxT = Math.Max(maxT, Math.Max(tStart, tEnd));
-                }
-
-                double totalLength = maxT - minT;
-                XYZ startPoint = p0 + dir * minT;
-
-                var crossConfig = new[]
-                {
-                    new { Name = "Gối Trái", Ratio = 0.15 },
-                    new { Name = "Giữa Nhịp", Ratio = 0.50 },
-                    new { Name = "Gối Phải", Ratio = 0.85 }
-                };
-
-                for (int i = 0; i < crossConfig.Length; i++)
-                {
-                    var config = crossConfig[i];
-                    XYZ crossPoint = startPoint + dir * (totalLength * config.Ratio);
-
-                    ViewSection crossView = CreateCrossSectionAtPoint(doc, crossPoint, dir, viewModel.SelectedSectionViewType.Id, scaleValue);
-                    if (crossView != null)
+                    double beamWidth = 1.0;
+                    double beamHeight = 2.0;
+                    var typeId = beam.GetTypeId();
+                    if (typeId != ElementId.InvalidElementId)
                     {
-                        // Áp dụng View Template nếu có chọn
-                        if (viewModel.SelectedSectionViewTemplate != null)
+                        var typeElem = doc.GetElement(typeId);
+                        if (typeElem != null)
                         {
-                            crossView.ViewTemplateId = viewModel.SelectedSectionViewTemplate.Id;
+                            var bParam = typeElem.LookupParameter("b") ?? typeElem.LookupParameter("Width") ?? typeElem.LookupParameter("B");
+                            var hParam = typeElem.LookupParameter("h") ?? typeElem.LookupParameter("Height") ?? typeElem.LookupParameter("H");
+                            if (bParam != null && bParam.HasValue) beamWidth = bParam.AsDouble();
+                            if (hParam != null && hParam.HasValue) beamHeight = hParam.AsDouble();
                         }
-                        crossView.Name = $"Mặt Cắt Ngang - {config.Name} - " + DateTime.Now.ToString("mmss");
-                        viewModel.CreatedCrossSections.Add(crossView);
+                    }
 
-                        // Sắp xếp đều 3 mặt cắt ngang ở nửa trên của Sheet
-                        double xPos = 0.35 + i * 0.35;
-                        XYZ position = new XYZ(xPos, 0.75, 0);
-                        Viewport.Create(doc, sheet.Id, crossView.Id, position);
+                    for (int i = 0; i < crossConfig.Length; i++)
+                    {
+                        var config = crossConfig[i];
+                        XYZ crossPoint = pStart + beamDir * (segmentLength * config.Ratio);
+
+                        ViewSection crossView = CreateCrossSectionAtPoint(doc, crossPoint, beamDir, viewModel.SelectedDetailViewType.Id, scaleValue, beamWidth, beamHeight);
+                        if (crossView != null)
+                        {
+                            // Áp dụng View Template nếu có chọn
+                            if (viewModel.SelectedSectionViewTemplate != null)
+                            {
+                                crossView.ViewTemplateId = viewModel.SelectedSectionViewTemplate.Id;
+                            }
+                            crossView.Name = $"Mặt Cắt Ngang - {beam.Name} - {config.Name} - {DateTime.Now.ToString("mmss")} - {beamIndex}_{i}";
+                            viewModel.CreatedCrossSections.Add(crossView);
+
+                            // Sắp xếp đều các mặt cắt ngang thành lưới trên Sheet
+                            // i (0 -> 2) là cột, beamIndex là dòng
+                            double xPos = 0.25 + i * 0.25;
+                            double yPos = 0.85 - beamIndex * 0.12;
+                            XYZ position = new XYZ(xPos, yPos, 0);
+                            Viewport vp = Viewport.Create(doc, sheet.Id, crossView.Id, position);
+                            if (viewModel.SelectedCrossSectionViewportType != null)
+                            {
+                                vp.ChangeTypeId(viewModel.SelectedCrossSectionViewportType.Id);
+                            }
+                        }
                     }
                 }
             }
@@ -142,19 +172,24 @@ namespace ShopDrawings_BEAM.Model
                 .Where(r => hostIds.Contains(r.GetHostId()))
                 .ToList();
 
+            int totalSuccess = 0;
+            List<string> errors = new List<string>();
+
             // 2. Chèn Rebar Tags trên Mặt cắt dọc dầm
-            if (viewModel.CreatedLongitudinalView != null && viewModel.SelectedLongitudinalMainRebarTag != null)
+            if (viewModel.CreatedLongitudinalView != null)
             {
-                CreateRebarTags(doc, viewModel.CreatedLongitudinalView, rebars, viewModel.SelectedLongitudinalMainRebarTag.Id);
+                totalSuccess += CreateRebarTags(doc, viewModel.CreatedLongitudinalView, rebars, viewModel, errors);
             }
 
             // 3. Chèn Rebar Tags trên các Mặt cắt ngang
-            if (viewModel.SelectedLongitudinalStirrupTag != null)
+            foreach (var crossView in viewModel.CreatedCrossSections)
             {
-                foreach (var crossView in viewModel.CreatedCrossSections)
-                {
-                    CreateRebarTags(doc, crossView, rebars, viewModel.SelectedLongitudinalStirrupTag.Id);
-                }
+                totalSuccess += CreateRebarTags(doc, crossView, rebars, viewModel, errors);
+            }
+
+            if (totalSuccess == 0 && errors.Count > 0)
+            {
+                Autodesk.Revit.UI.TaskDialog.Show("Lỗi Tạo Tag", "Không thể tạo tag nào cho thép. Lỗi chi tiết:\n" + string.Join("\n", errors.Distinct().Take(5)));
             }
 
             // 4. Tạo Dimension liên tục trên Mặt cắt dọc dầm
@@ -210,9 +245,10 @@ namespace ShopDrawings_BEAM.Model
             XYZ center = p0 + dir * ((minT + maxT) / 2.0);
 
             // Hệ trục toạ độ của mặt cắt dọc
-            XYZ basisX = dir;
-            XYZ basisY = XYZ.BasisZ;
-            XYZ basisZ = basisX.CrossProduct(basisY).Normalize();
+            XYZ basisX = -dir;
+            XYZ up = Math.Abs(dir.DotProduct(XYZ.BasisZ)) > 0.99 ? XYZ.BasisY : XYZ.BasisZ;
+            XYZ basisZ = basisX.CrossProduct(up).Normalize();
+            XYZ basisY = basisZ.CrossProduct(basisX).Normalize();
 
             Transform transform = Transform.Identity;
             transform.Origin = center;
@@ -223,12 +259,48 @@ namespace ShopDrawings_BEAM.Model
             BoundingBoxXYZ box = new BoundingBoxXYZ();
             box.Transform = transform;
 
+            // Lấy kích thước dầm (b, h) để làm căn cứ offset
+            double beamWidth = 1.0;
+            double beamHeight = 2.0;
+            if (beams != null && beams.Count > 0)
+            {
+                var firstBeam = beams[0];
+                var typeId = firstBeam.GetTypeId();
+                if (typeId != ElementId.InvalidElementId)
+                {
+                    var typeElem = doc.GetElement(typeId);
+                    if (typeElem != null)
+                    {
+                        var bParam = typeElem.LookupParameter("b") ?? typeElem.LookupParameter("Width") ?? typeElem.LookupParameter("B");
+                        var hParam = typeElem.LookupParameter("h") ?? typeElem.LookupParameter("Height") ?? typeElem.LookupParameter("H");
+                        if (bParam != null && bParam.HasValue) beamWidth = bParam.AsDouble();
+                        if (hParam != null && hParam.HasValue) beamHeight = hParam.AsDouble();
+                    }
+                }
+            }
+
             // Đệm 1.0 feet (~30cm) ở hai đầu biên
             double paddingX = 1.0;
-            box.Min = new XYZ(-length / 2.0 - paddingX, -3.0, -1.0);
-            box.Max = new XYZ(length / 2.0 + paddingX, 3.0, 1.0);
+            // Chiều cao (Y local) và chiều sâu nhìn (Z local) động theo kích thước dầm
+            double minY = -beamHeight * 1.5;
+            double maxY = beamHeight * 0.5;
+            double minZ = -beamWidth * 1.5;
+            double maxZ = beamWidth * 1.5;
 
-            ViewSection section = ViewSection.CreateSection(doc, viewFamilyTypeId, box);
+            box.Min = new XYZ(-length / 2.0 - paddingX, minY, minZ);
+            box.Max = new XYZ(length / 2.0 + paddingX, maxY, maxZ);
+
+            ViewSection section = null;
+            ViewFamilyType vft = doc.GetElement(viewFamilyTypeId) as ViewFamilyType;
+            if (vft != null && vft.ViewFamily == ViewFamily.Detail)
+            {
+                section = ViewSection.CreateDetail(doc, viewFamilyTypeId, box);
+            }
+            else
+            {
+                section = ViewSection.CreateSection(doc, viewFamilyTypeId, box);
+            }
+
             if (section != null)
             {
                 section.Scale = (int)scaleValue;
@@ -239,12 +311,13 @@ namespace ShopDrawings_BEAM.Model
         /// <summary>
         /// Tạo mặt cắt ngang vuông góc tại điểm bất kỳ dọc theo hướng dầm
         /// </summary>
-        private static ViewSection CreateCrossSectionAtPoint(Document doc, XYZ point, XYZ dir, ElementId viewFamilyTypeId, double scaleValue)
+        private static ViewSection CreateCrossSectionAtPoint(Document doc, XYZ point, XYZ dir, ElementId viewFamilyTypeId, double scaleValue, double beamWidth, double beamHeight)
         {
             // Hệ trục toạ độ của mặt cắt ngang
-            XYZ basisX = dir.CrossProduct(XYZ.BasisZ).Normalize();
-            XYZ basisY = XYZ.BasisZ;
-            XYZ basisZ = dir;
+            XYZ basisZ = -dir;
+            XYZ up = Math.Abs(dir.DotProduct(XYZ.BasisZ)) > 0.99 ? XYZ.BasisY : XYZ.BasisZ;
+            XYZ basisX = dir.CrossProduct(up).Normalize();
+            XYZ basisY = basisZ.CrossProduct(basisX).Normalize();
 
             Transform transform = Transform.Identity;
             transform.Origin = point;
@@ -255,11 +328,26 @@ namespace ShopDrawings_BEAM.Model
             BoundingBoxXYZ box = new BoundingBoxXYZ();
             box.Transform = transform;
 
-            // Kích thước hộp cắt ngang dầm rộng khoảng 1.5ft (~45cm) và cao 2.5ft (~75cm)
-            box.Min = new XYZ(-1.5, -2.5, -0.5);
-            box.Max = new XYZ(1.5, 2.5, 0.5);
+            // Kích thước hộp cắt ngang dầm rộng khoảng 1.5 * beamWidth và cao 1.5 * beamHeight
+            double minX = -beamWidth * 1.5;
+            double maxX = beamWidth * 1.5;
+            double minY = -beamHeight * 1.5;
+            double maxY = beamHeight * 0.5;
 
-            ViewSection section = ViewSection.CreateSection(doc, viewFamilyTypeId, box);
+            box.Min = new XYZ(minX, minY, -0.5);
+            box.Max = new XYZ(maxX, maxY, 0.5);
+
+            ViewSection section = null;
+            ViewFamilyType vft = doc.GetElement(viewFamilyTypeId) as ViewFamilyType;
+            if (vft != null && vft.ViewFamily == ViewFamily.Detail)
+            {
+                section = ViewSection.CreateDetail(doc, viewFamilyTypeId, box);
+            }
+            else
+            {
+                section = ViewSection.CreateSection(doc, viewFamilyTypeId, box);
+            }
+
             if (section != null)
             {
                 section.Scale = (int)scaleValue;
@@ -270,45 +358,120 @@ namespace ShopDrawings_BEAM.Model
         /// <summary>
         /// Tự động chèn Tag cho danh sách thép trong khung nhìn
         /// </summary>
-        private static void CreateRebarTags(Document doc, ViewSection view, List<Rebar> rebars, ElementId tagSymbolId)
+        private static int CreateRebarTags(Document doc, ViewSection view, List<Rebar> rebars, MainViewModel viewModel, List<string> errors)
         {
-            if (tagSymbolId == ElementId.InvalidElementId || rebars == null || rebars.Count == 0) return;
+            ElementId mainTagId = viewModel.SelectedLongitudinalMainRebarTag?.Id ?? ElementId.InvalidElementId;
+            ElementId stirrupTagId = viewModel.SelectedLongitudinalStirrupTag?.Id ?? ElementId.InvalidElementId;
+
+            bool isCrossSection = viewModel.CreatedCrossSections.Any(cv => cv.Id == view.Id);
+            if (isCrossSection && viewModel.SelectedCrossSectionStirrupTag != null)
+            {
+                stirrupTagId = viewModel.SelectedCrossSectionStirrupTag.Id;
+            }
+
+            if (rebars == null || rebars.Count == 0) return 0;
+
+            int successCount = 0;
 
             foreach (var rebar in rebars)
             {
                 try
                 {
-                    // Lấy BoundingBox của Rebar trong View để xác định vị trí chèn Tag
-                    BoundingBoxXYZ bbox = rebar.get_BoundingBox(view);
+                    BoundingBoxXYZ bbox = rebar.get_BoundingBox(view) ?? rebar.get_BoundingBox(null);
                     if (bbox == null) continue;
 
-                    XYZ center = (bbox.Min + bbox.Max) / 2.0;
-                    XYZ tagPos = center + new XYZ(0, 0.3, 0); // Đặt lệch lên trên 0.3 feet (~9cm)
+                    XYZ localCenter = (bbox.Min + bbox.Max) / 2.0;
+                    XYZ center = bbox.Transform.OfPoint(localCenter);
 
-                    Reference rebarRef = new Reference(rebar);
-
-                    IndependentTag tag = IndependentTag.Create(
-                        doc,
-                        tagSymbolId,
-                        view.Id,
-                        rebarRef,
-                        true,
-                        TagOrientation.Horizontal,
-                        tagPos
-                    );
-
-                    if (tag != null)
+                    string mark = "";
+                    Parameter markParam = rebar.get_Parameter(BuiltInParameter.ALL_MODEL_MARK);
+                    if (markParam != null && markParam.HasValue)
                     {
-                        tag.LeaderEndCondition = LeaderEndCondition.Free;
-                        //tag.LeaderEnd = center;
-                        tag.TagHeadPosition = tagPos;
+                        mark = markParam.AsString();
+                    }
+
+                    ElementId tagSymbolId = ElementId.InvalidElementId;
+                    XYZ tagPos = center;
+
+                    double paperOffset = 10; // 4mm trên bản vẽ giấy
+                    double offsetFeet = (paperOffset * view.Scale) / 304.8; // Quy đổi ra Feet trong mô hình (200mm ở tỷ lệ 1:50)
+
+                    if (mark.Contains("TOP"))
+                    {
+                        tagSymbolId = mainTagId;
+                        tagPos = center + view.UpDirection * offsetFeet;
+                    }
+                    else if (mark.Contains("BOT"))
+                    {
+                        tagSymbolId = mainTagId;
+                        tagPos = center - view.UpDirection * offsetFeet;
+                    }
+                    else if (mark.Contains("STIRRUP"))
+                    {
+                        tagSymbolId = mainTagId;
+                        tagPos = center + view.UpDirection * 2*offsetFeet;
+                    }
+                    else 
+                    {
+                        tagSymbolId = mainTagId;
+                        tagPos = center + view.UpDirection * offsetFeet;
+                    }
+
+                    if (isCrossSection && !string.Equals(mark, "Stirrup", StringComparison.OrdinalIgnoreCase) && viewModel.SelectedCrossSectionMainRebarTag != null)
+                    {
+                        MultiReferenceAnnotationOptions options = new MultiReferenceAnnotationOptions(viewModel.SelectedCrossSectionMainRebarTag);
+                        options.TagHeadPosition = tagPos;
+                        options.DimensionLineOrigin = center;
+                        options.DimensionLineDirection = view.RightDirection;
+                        options.DimensionPlaneNormal = view.ViewDirection;
+                        options.SetElementsToDimension(new List<ElementId> { rebar.Id });
+
+                        MultiReferenceAnnotation mra = MultiReferenceAnnotation.Create(doc, view.Id, options);
+                        if (mra != null)
+                        {
+                            successCount++;
+                        }
+                    }
+                    else
+                    {
+                        if (tagSymbolId == ElementId.InvalidElementId) continue;
+
+                        Reference rebarRef = null;
+                        IList<Subelement> subelements = rebar.GetSubelements();
+                        if (subelements != null && subelements.Count > 0)
+                        {
+                            rebarRef = subelements[0].GetReference();
+                        }
+                        else
+                        {
+                            rebarRef = new Reference(rebar);
+                        }
+
+                        IndependentTag tag = IndependentTag.Create(
+                            doc,
+                            tagSymbolId,
+                            view.Id,
+                            rebarRef,
+                            true,
+                            TagOrientation.Horizontal,
+                            tagPos
+                        );
+
+                        if (tag != null)
+                        {
+                            // Giữ liên kết leader gắn vào thanh thép (Attached), chỉ điều chỉnh vị trí đặt đầu tag
+                            tag.TagHeadPosition = tagPos;
+                            successCount++;
+                        }
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Bỏ qua lỗi với các thanh thép riêng lẻ không thể Tag
+                    errors.Add(ex.Message);
                 }
             }
+
+            return successCount;
         }
 
         /// <summary>

@@ -18,6 +18,8 @@ namespace ShopDrawings_BEAM.ViewModels
         public ObservableCollection<DimensionType> DimensionTypes { get; set; }
         public ObservableCollection<FamilySymbol> TitleBlocks { get; set; }
         public ObservableCollection<ViewFamilyType> SectionViewTypes { get; set; }
+        public ObservableCollection<ViewFamilyType> DetailViewTypes { get; set; }
+        public ObservableCollection<ElementType> ViewportTypes { get; set; }
 
         // --- Các thuộc tính được chọn (Selected Items) ---
         // Bản vẽ dọc
@@ -29,9 +31,12 @@ namespace ShopDrawings_BEAM.ViewModels
 
         // Mặt cắt
         public ViewFamilyType SelectedSectionViewType { get; set; }
+        public ViewFamilyType SelectedDetailViewType { get; set; }
         public View SelectedSectionViewTemplate { get; set; }
         public MultiReferenceAnnotationType SelectedCrossSectionMainRebarTag { get; set; }
         public FamilySymbol SelectedCrossSectionStirrupTag { get; set; }
+        public ElementType SelectedLongitudinalViewportType { get; set; }
+        public ElementType SelectedCrossSectionViewportType { get; set; }
 
         // Mở rộng
         public ObservableCollection<string> ViewScales { get; set; }
@@ -159,6 +164,22 @@ namespace ShopDrawings_BEAM.ViewModels
                 .ToList();
             SectionViewTypes = new ObservableCollection<ViewFamilyType>(sectionViewTypes);
 
+            // Detail View Types (for cross section detail views)
+            var detailViewTypes = new FilteredElementCollector(_doc)
+                .OfClass(typeof(ViewFamilyType))
+                .Cast<ViewFamilyType>()
+                .Where(v => v.ViewFamily == ViewFamily.Detail)
+                .ToList();
+            DetailViewTypes = new ObservableCollection<ViewFamilyType>(detailViewTypes);
+
+            // Viewport Types
+            var viewportTypes = new FilteredElementCollector(_doc)
+                .OfClass(typeof(ElementType))
+                .Cast<ElementType>()
+                .Where(x => x.FamilyName != null && x.FamilyName.Equals("Viewport", System.StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            ViewportTypes = new ObservableCollection<ElementType>(viewportTypes);
+
             ViewScales = new ObservableCollection<string> { "1:20", "1:25", "1:50", "1:100" };
 
             AutoSelectInitialValues();
@@ -173,11 +194,28 @@ namespace ShopDrawings_BEAM.ViewModels
             SelectedDimType = DimensionTypes.FirstOrDefault(x => x.Name.ToLower().Contains("dim") || x.Name.ToLower().Contains("100")) ?? DimensionTypes.FirstOrDefault();
 
             // Auto-select View Templates
-            SelectedLongitudinalViewTemplate = ViewTemplates.FirstOrDefault(x => x.Name.ToLower().Contains("dọc") || x.Name.ToLower().Contains("doc") || x.Name.ToLower().Contains("dam")) ?? ViewTemplates.FirstOrDefault();
-            SelectedSectionViewTemplate = ViewTemplates.FirstOrDefault(x => x.Name.ToLower().Contains("cắt") || x.Name.ToLower().Contains("cat") || x.Name.ToLower().Contains("ngang")) ?? ViewTemplates.FirstOrDefault();
+            SelectedLongitudinalViewTemplate = ViewTemplates.FirstOrDefault(x => x.Name.ToLower().Contains("beam") && (x.Name.ToLower().Contains("dọc") || x.Name.ToLower().Contains("doc")))
+                ?? ViewTemplates.FirstOrDefault(x => x.Name.ToLower().Contains("beam"))
+                ?? ViewTemplates.FirstOrDefault(x => x.Name.ToLower().Contains("dọc") || x.Name.ToLower().Contains("doc") || x.Name.ToLower().Contains("dam"))
+                ?? ViewTemplates.FirstOrDefault();
+
+            SelectedSectionViewTemplate = ViewTemplates.FirstOrDefault(x => x.Name.ToLower().Contains("beam") && (x.Name.ToLower().Contains("cắt") || x.Name.ToLower().Contains("cat") || x.Name.ToLower().Contains("ngang")))
+                ?? ViewTemplates.FirstOrDefault(x => x.Name.ToLower().Contains("beam"))
+                ?? ViewTemplates.FirstOrDefault(x => x.Name.ToLower().Contains("cắt") || x.Name.ToLower().Contains("cat") || x.Name.ToLower().Contains("ngang"))
+                ?? ViewTemplates.FirstOrDefault();
 
             // Auto-select Section View Type
             SelectedSectionViewType = SectionViewTypes.FirstOrDefault(x => x.Name.ToLower().Contains("cắt") || x.Name.ToLower().Contains("section")) ?? SectionViewTypes.FirstOrDefault();
+
+            // Auto-select Detail View Type
+            SelectedDetailViewType = DetailViewTypes.FirstOrDefault(x => x.Name.ToLower().Contains("detail") || x.Name.ToLower().Contains("chi tiết") || x.Name.ToLower().Contains("chi tiet")) ?? DetailViewTypes.FirstOrDefault();
+
+            // Auto-select Viewport Type
+            SelectedLongitudinalViewportType = ViewportTypes.FirstOrDefault(x => x.Name.ToLower().Contains("show") || x.Name.ToLower().Contains("tiêu đề") || x.Name.ToLower().Contains("tieu de") || x.Name.ToLower().Contains("title"))
+                ?? ViewportTypes.FirstOrDefault();
+
+            SelectedCrossSectionViewportType = ViewportTypes.FirstOrDefault(x => x.Name.ToLower().Contains("no title") || x.Name.ToLower().Contains("không tiêu đề") || x.Name.ToLower().Contains("khong tieu de"))
+                ?? ViewportTypes.FirstOrDefault();
 
             // Auto-select Tags (Mặt cắt dọc)
             SelectedLongitudinalMainRebarTag = RebarTags.FirstOrDefault(x => x.Name.ToLower().Contains("chủ") || x.Name.ToLower().Contains("chu") || x.Name.ToLower().Contains("dọc") || x.Name.ToLower().Contains("doc")) ?? RebarTags.FirstOrDefault();
@@ -191,6 +229,8 @@ namespace ShopDrawings_BEAM.ViewModels
             ProgressValue = 0;
             CurrentStep = 1;
             HasSelectedBeam = false;
+
+            LoadSettings();
         }
 
         public void SetSelectedBeams(System.Collections.Generic.List<Element> beams)
@@ -271,6 +311,7 @@ namespace ShopDrawings_BEAM.ViewModels
                     }
                 }
             }
+            SelectTemplateBasedOnDirection();
         }
 
         public void SetSelectedBeam(Element beam)
@@ -318,6 +359,32 @@ namespace ShopDrawings_BEAM.ViewModels
                     }
                 }
             }
+            SelectTemplateBasedOnDirection();
+        }
+
+        private void SelectTemplateBasedOnDirection()
+        {
+            if (SelectedBeams == null || SelectedBeams.Count == 0) return;
+
+            Element beam = SelectedBeams[0];
+            LocationCurve locCurve = beam.Location as LocationCurve;
+            if (locCurve == null) return;
+
+            Line line = locCurve.Curve as Line;
+            if (line == null) return;
+
+            XYZ dir = line.Direction.Normalize();
+
+            // Nếu |X| > |Y|, dầm chủ yếu chạy theo trục X -> Chọn Beam Px
+            // Ngược lại nếu |Y| >= |X|, dầm chạy theo trục Y -> Chọn Beam Py
+            bool isMostlyX = Math.Abs(dir.X) > Math.Abs(dir.Y);
+            string targetTemplateName = isMostlyX ? "beam px" : "beam py";
+
+            var template = ViewTemplates.FirstOrDefault(t => t.Name.ToLower().Contains(targetTemplateName));
+            if (template != null)
+            {
+                SelectedLongitudinalViewTemplate = template;
+            }
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -326,5 +393,147 @@ namespace ShopDrawings_BEAM.ViewModels
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
+
+        // --- JSON Settings Save/Load ---
+        private string GetSettingsFilePath()
+        {
+            string appData = System.Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData);
+            string folder = System.IO.Path.Combine(appData, "ShopDrawings_BEAM");
+            if (!System.IO.Directory.Exists(folder))
+            {
+                System.IO.Directory.CreateDirectory(folder);
+            }
+            return System.IO.Path.Combine(folder, "settings.json");
+        }
+
+        public void SaveSettings()
+        {
+            try
+            {
+                var settings = new UserSettings
+                {
+                    SelectedTitleBlockName = SelectedTitleBlock?.Name,
+                    SelectedDimTypeName = SelectedDimType?.Name,
+                    SelectedLongitudinalViewTemplateName = SelectedLongitudinalViewTemplate?.Name,
+                    SelectedLongitudinalMainRebarTagName = SelectedLongitudinalMainRebarTag?.Name,
+                    SelectedLongitudinalStirrupTagName = SelectedLongitudinalStirrupTag?.Name,
+                    SelectedSectionViewTypeName = SelectedSectionViewType?.Name,
+                    SelectedDetailViewTypeName = SelectedDetailViewType?.Name,
+                    SelectedSectionViewTemplateName = SelectedSectionViewTemplate?.Name,
+                    SelectedCrossSectionMainRebarTagName = SelectedCrossSectionMainRebarTag?.Name,
+                    SelectedCrossSectionStirrupTagName = SelectedCrossSectionStirrupTag?.Name,
+                    SelectedLongitudinalViewportTypeName = SelectedLongitudinalViewportType?.Name,
+                    SelectedCrossSectionViewportTypeName = SelectedCrossSectionViewportType?.Name,
+                    SelectedViewScale = SelectedViewScale
+                };
+
+                string json = System.Text.Json.JsonSerializer.Serialize(settings, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+                System.IO.File.WriteAllText(GetSettingsFilePath(), json);
+            }
+            catch
+            {
+                // Silently ignore settings save errors
+            }
+        }
+
+        public void LoadSettings()
+        {
+            try
+            {
+                string path = GetSettingsFilePath();
+                if (!System.IO.File.Exists(path)) return;
+
+                string json = System.IO.File.ReadAllText(path);
+                var settings = System.Text.Json.JsonSerializer.Deserialize<UserSettings>(json);
+                if (settings == null) return;
+
+                if (!string.IsNullOrEmpty(settings.SelectedTitleBlockName))
+                {
+                    var match = TitleBlocks.FirstOrDefault(x => x.Name == settings.SelectedTitleBlockName);
+                    if (match != null) SelectedTitleBlock = match;
+                }
+                if (!string.IsNullOrEmpty(settings.SelectedDimTypeName))
+                {
+                    var match = DimensionTypes.FirstOrDefault(x => x.Name == settings.SelectedDimTypeName);
+                    if (match != null) SelectedDimType = match;
+                }
+                if (!string.IsNullOrEmpty(settings.SelectedLongitudinalViewTemplateName))
+                {
+                    var match = ViewTemplates.FirstOrDefault(x => x.Name == settings.SelectedLongitudinalViewTemplateName);
+                    if (match != null) SelectedLongitudinalViewTemplate = match;
+                }
+                if (!string.IsNullOrEmpty(settings.SelectedLongitudinalMainRebarTagName))
+                {
+                    var match = RebarTags.FirstOrDefault(x => x.Name == settings.SelectedLongitudinalMainRebarTagName);
+                    if (match != null) SelectedLongitudinalMainRebarTag = match;
+                }
+                if (!string.IsNullOrEmpty(settings.SelectedLongitudinalStirrupTagName))
+                {
+                    var match = RebarTags.FirstOrDefault(x => x.Name == settings.SelectedLongitudinalStirrupTagName);
+                    if (match != null) SelectedLongitudinalStirrupTag = match;
+                }
+                if (!string.IsNullOrEmpty(settings.SelectedSectionViewTypeName))
+                {
+                    var match = SectionViewTypes.FirstOrDefault(x => x.Name == settings.SelectedSectionViewTypeName);
+                    if (match != null) SelectedSectionViewType = match;
+                }
+                if (!string.IsNullOrEmpty(settings.SelectedDetailViewTypeName))
+                {
+                    var match = DetailViewTypes.FirstOrDefault(x => x.Name == settings.SelectedDetailViewTypeName);
+                    if (match != null) SelectedDetailViewType = match;
+                }
+                if (!string.IsNullOrEmpty(settings.SelectedSectionViewTemplateName))
+                {
+                    var match = ViewTemplates.FirstOrDefault(x => x.Name == settings.SelectedSectionViewTemplateName);
+                    if (match != null) SelectedSectionViewTemplate = match;
+                }
+                if (!string.IsNullOrEmpty(settings.SelectedCrossSectionMainRebarTagName))
+                {
+                    var match = MultiRebarTags.FirstOrDefault(x => x.Name == settings.SelectedCrossSectionMainRebarTagName);
+                    if (match != null) SelectedCrossSectionMainRebarTag = match;
+                }
+                if (!string.IsNullOrEmpty(settings.SelectedCrossSectionStirrupTagName))
+                {
+                    var match = RebarTags.FirstOrDefault(x => x.Name == settings.SelectedCrossSectionStirrupTagName);
+                    if (match != null) SelectedCrossSectionStirrupTag = match;
+                }
+                if (!string.IsNullOrEmpty(settings.SelectedLongitudinalViewportTypeName))
+                {
+                    var match = ViewportTypes.FirstOrDefault(x => x.Name == settings.SelectedLongitudinalViewportTypeName);
+                    if (match != null) SelectedLongitudinalViewportType = match;
+                }
+                if (!string.IsNullOrEmpty(settings.SelectedCrossSectionViewportTypeName))
+                {
+                    var match = ViewportTypes.FirstOrDefault(x => x.Name == settings.SelectedCrossSectionViewportTypeName);
+                    if (match != null) SelectedCrossSectionViewportType = match;
+                }
+                if (!string.IsNullOrEmpty(settings.SelectedViewScale))
+                {
+                    var match = ViewScales.FirstOrDefault(x => x == settings.SelectedViewScale);
+                    if (match != null) SelectedViewScale = match;
+                }
+            }
+            catch
+            {
+                // Silently ignore settings load errors
+            }
+        }
+    }
+
+    public class UserSettings
+    {
+        public string SelectedTitleBlockName { get; set; }
+        public string SelectedDimTypeName { get; set; }
+        public string SelectedLongitudinalViewTemplateName { get; set; }
+        public string SelectedLongitudinalMainRebarTagName { get; set; }
+        public string SelectedLongitudinalStirrupTagName { get; set; }
+        public string SelectedSectionViewTypeName { get; set; }
+        public string SelectedDetailViewTypeName { get; set; }
+        public string SelectedSectionViewTemplateName { get; set; }
+        public string SelectedCrossSectionMainRebarTagName { get; set; }
+        public string SelectedCrossSectionStirrupTagName { get; set; }
+        public string SelectedLongitudinalViewportTypeName { get; set; }
+        public string SelectedCrossSectionViewportTypeName { get; set; }
+        public string SelectedViewScale { get; set; }
     }
 }

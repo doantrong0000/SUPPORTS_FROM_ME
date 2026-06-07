@@ -1,4 +1,4 @@
-﻿<Project Sdk="Nice3point.Revit.Sdk/6.1.2">
+<Project Sdk="Nice3point.Revit.Sdk/6.1.2">
 
     <PropertyGroup>
         <UseWPF>true</UseWPF>
@@ -11,6 +11,10 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <None Remove="Views\DRAWING.png" />
+    </ItemGroup>
+
+    <ItemGroup>
         <!-- Revit Platform -->
         <PackageReference Include="Nice3point.Revit.Toolkit" Version="$(RevitVersion).*" />
         <PackageReference Include="Nice3point.Revit.Extensions" Version="$(RevitVersion).*" />
@@ -19,10 +23,15 @@
 
         <!-- Development References -->
         <PackageReference Include="JetBrains.Annotations" Version="2025.2.4" PrivateAssets="all" />
+        <PackageReference Include="System.Text.Json" Version="8.0.5" />
     </ItemGroup>
 
     <ItemGroup>
       <Folder Include="Resources\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Resource Include="Views\DRAWING.png" />
     </ItemGroup>
 
 </Project>

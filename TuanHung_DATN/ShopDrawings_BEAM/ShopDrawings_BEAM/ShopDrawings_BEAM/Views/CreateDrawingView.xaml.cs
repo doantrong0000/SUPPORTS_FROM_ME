@@ -14,46 +14,49 @@ namespace ShopDrawings_BEAM.Views
             InitializeComponent();
         }
 
-        private void BtnCreateViews_Click(object sender, RoutedEventArgs e)
+        private void BtnExecute_Click(object sender, RoutedEventArgs e)
         {
             var viewModel = this.DataContext as MainViewModel;
             if (viewModel == null) return;
 
-            try
+            // Lưu cài đặt của người dùng vào AppData
+            viewModel.SaveSettings();
+
+            using (Transaction trans = new Transaction(viewModel.Doc, "Triển khai Shop Drawings Dầm"))
             {
-                using (Transaction trans = new Transaction(viewModel.Doc, "Tạo Khung Nhìn Dầm Shop Drawings"))
-                {
-                    trans.Start();
+                trans.Start();
 
-                    // Thực thi tạo ViewSheet, Mặt cắt dọc và Mặt cắt ngang
-                    DrawingCreator.CreateBeamDrawings(viewModel);
+                // 1. Thực thi tạo ViewSheet, Mặt cắt dọc và Mặt cắt ngang
+                DrawingCreator.CreateBeamDrawings(viewModel);
 
-                    // Cập nhật tiến trình từng bước thủ công để dễ thuyết trình
-                    viewModel.ProgressValue = 60;
+                // Cập nhật Revit Database để có các tham chiếu hình học mới nhất
+                viewModel.Doc.Regenerate();
 
-                    trans.Commit();
-                    
-                    TaskDialog.Show("Shop Drawing", "Đã khởi tạo xong Sheet và Khung nhìn (Mặt cắt dọc & Mặt cắt ngang)!");
-                }
+                // 2. Tự động chèn Tag thép & Dimension dầm
+                DrawingCreator.AnnotateBeamDrawings(viewModel);
 
-                // Chuyển qua bước cấu hình Ký hiệu & Kích thước trực tiếp trên cùng giao diện!
+                // Hoàn tất
+                viewModel.ProgressValue = 100;
                 viewModel.CurrentStep = 2;
+
+                trans.Commit();
                 
-                var viewDimTag = new DimTagView();
-                viewDimTag.DataContext = viewModel;
-                this.Hide();
-                viewDimTag.ShowDialog();
+                TaskDialog.Show("Shop Drawing", "Đã triển khai bản vẽ dầm và chèn toàn bộ Tag & Dimension thành công!");
+
+                this.DialogResult = true;
                 this.Close();
-            }
-            catch (Exception ex)
-            {
-                TaskDialog.Show("Lỗi", $"Lỗi khởi tạo view: {ex.Message}");
             }
         }
 
         private void BtnCancel_Click(object sender, RoutedEventArgs e)
         {
             this.DialogResult = false;
+            this.Close();
+        }
+
+        private void BtnFinish_Click(object sender, RoutedEventArgs e)
+        {
+            this.DialogResult = true;
             this.Close();
         }
     }

@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ShopDrawings_BEAM.Views"
         mc:Ignorable="d"
-        Title="ShopDrawings - Wizard Tạo Bản Vẽ Dầm Revit" Height="680" Width="850"
+        Title="ShopDrawings - Thiết lập &amp; Tạo Bản Vẽ Dầm" Height="780" Width="1280"
         WindowStartupLocation="CenterScreen"
         Background="#FFFFFF" FontFamily="Segoe UI">
 
@@ -20,14 +20,14 @@
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="FontSize" Value="13"/>
         </Style>
-        
+
         <Style TargetType="TextBlock">
             <Setter Property="Foreground" Value="#333333"/>
             <Setter Property="Margin" Value="0,8,0,4"/>
             <Setter Property="FontWeight" Value="Normal"/>
             <Setter Property="FontSize" Value="13"/>
         </Style>
-        
+
         <Style TargetType="ComboBox">
             <Setter Property="Height" Value="32"/>
             <Setter Property="Padding" Value="6,4,6,4"/>
@@ -37,7 +37,7 @@
             <Setter Property="Foreground" Value="#222222"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
-        
+
         <Style TargetType="Button">
             <Setter Property="Height" Value="36"/>
             <Setter Property="FontSize" Value="13"/>
@@ -96,169 +96,164 @@
                     <Setter Property="Background" Value="#111111"/>
                     <Setter Property="Foreground" Value="#FFFFFF"/>
                 </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="BorderBrush" Value="#CCCCCC"/>
+                    <Setter Property="Foreground" Value="#888888"/>
+                </Trigger>
             </Style.Triggers>
         </Style>
     </Window.Resources>
 
     <Grid Margin="25">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/> <!-- Wizard Header -->
-            <RowDefinition Height="*"/>    <!-- Steps Content -->
-            <RowDefinition Height="Auto"/> <!-- Wizard Footer -->
+            <RowDefinition Height="Auto"/>
+            <!-- Wizard Header -->
+            <RowDefinition Height="*"/>
+            <!-- Steps Content -->
+            <RowDefinition Height="Auto"/>
+            <!-- Wizard Footer -->
         </Grid.RowDefinitions>
 
         <!-- WIZARD HEADER -->
         <Border Grid.Row="0" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" Padding="0,0,0,15" Margin="0,0,0,20">
             <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                
-                <StackPanel Grid.Column="0">
+                <StackPanel>
                     <TextBlock Text="SHOP DRAWING DẦM TỰ ĐỘNG" FontSize="18" FontWeight="Bold" Foreground="#111111" Margin="0,0,0,4"/>
-                    <TextBlock Text="Quy trình từng bước hướng dẫn thiết lập cấu kiện, khung nhìn và chèn tag/dim thủ công." FontSize="12" Foreground="#666666" Margin="0"/>
-                </StackPanel>
-
-                <!-- Indicator bước -->
-                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Border CornerRadius="12" Width="24" Height="24" BorderBrush="#111111" BorderThickness="1.5">
-                        <Border.Style>
-                            <Style TargetType="Border">
-                                <Setter Property="Background" Value="#111111"/>
-                            </Style>
-                        </Border.Style>
-                        <TextBlock Text="1" Foreground="#FFFFFF" FontWeight="Bold" FontSize="11" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0" />
-                    </Border>
-                    
-                    <Line X1="0" Y1="12" X2="25" Y2="12" Stroke="#CCCCCC" StrokeThickness="1.5" Margin="8,0"/>
-
-                    <Border CornerRadius="12" Width="24" Height="24" BorderBrush="#CCCCCC" BorderThickness="1.5">
-                        <Border.Style>
-                            <Style TargetType="Border">
-                                <Setter Property="Background" Value="#FFFFFF"/>
-                                <Setter Property="BorderBrush" Value="#CCCCCC"/>
-                            </Style>
-                        </Border.Style>
-                        <TextBlock Text="2" Foreground="#CCCCCC" FontWeight="Bold" FontSize="11" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0" />
-                    </Border>
+                    <TextBlock Text="Thiết lập các thông số khung nhìn, mẫu ký hiệu và triển khai bản vẽ dầm tự động." FontSize="12" Foreground="#666666" Margin="0"/>
                 </StackPanel>
             </Grid>
         </Border>
 
         <!-- STEPS CONTENT -->
         <Grid Grid.Row="1">
-            
-            <!-- BƯỚC 1: CHỌN DẦM & TẠO KHUNG NHÌN -->
-            <Grid>
-                
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/> <!-- Chọn dầm -->
-                    <RowDefinition Height="Auto"/> <!-- Thông tin dầm -->
-                    <RowDefinition Height="*"/>    <!-- Cấu hình view template -->
-                </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="20"/>
+                <!-- Spacer -->
+                <ColumnDefinition Width="380"/>
+            </Grid.ColumnDefinitions>
 
-                <!-- 1.1 Chọn dầm -->
-                <Grid Grid.Row="0" Margin="0,0,0,15">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                        <TextBlock Text="Bước 1.1: Cấu kiện dầm đã chọn trong mô hình" FontWeight="Bold" FontSize="14" Margin="0"/>
-                        <TextBlock Text="Thông tin hình học được trích xuất trực tiếp từ cấu kiện dầm đã chọn." FontSize="12" Foreground="#666666" Margin="0,2,0,0"/>
-                    </StackPanel>
-                    <Border Grid.Column="1" Background="#E8F5E9" BorderBrush="#2E7D32" BorderThickness="1" CornerRadius="4" Padding="12,6" VerticalAlignment="Center">
-                        <TextBlock Text="✓ ĐÃ CHỌN DẦM" Foreground="#2E7D32" FontWeight="Bold" FontSize="11"/>
-                    </Border>
+            <!-- VÙNG CHÍNH (MAIN AREA): HÌNH ẢNH MINH HỌA & CANVAS -->
+            <Border Grid.Column="0" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="4" Background="#FDFDFD">
+                <Grid ClipToBounds="True">
+                    <!-- Hình ảnh minh họa làm nền -->
+                    <Image Source="pack://application:,,,/ShopDrawings_BEAM;component/Views/DRAWING.png" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+
+                    <!-- Canvas chứa các Combobox đặt bất kỳ để kéo thả sau -->
+                    <Canvas Background="Transparent" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+
+                        <!-- Card 1: Tag Thép Dọc (Mặt cắt dọc) -->
+                        <Border Canvas.Left="478" Canvas.Top="10" Width="160" 
+                                Background="#F7FFFFFF" BorderBrush="#FFCCCCCC" BorderThickness="1" CornerRadius="6" Padding="6">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="8" Color="#111111" Opacity="0.1" ShadowDepth="1"/>
+                            </Border.Effect>
+                            <StackPanel>
+                                <TextBlock Text="Tag Thép Dọc (MC dọc):" FontWeight="SemiBold" FontSize="10" Margin="0,0,0,4"/>
+                                <ComboBox ItemsSource="{Binding RebarTags}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedLongitudinalMainRebarTag}" Height="24" FontSize="10"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Card 2: Tag Thép Đai (Mặt cắt dọc) -->
+                        <Border Canvas.Left="248" Canvas.Top="10" Width="160" 
+                                Background="#F7FFFFFF" BorderBrush="#FFCCCCCC" BorderThickness="1" CornerRadius="6" Padding="6" HorizontalAlignment="Left" VerticalAlignment="Top">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="8" Color="#111111" Opacity="0.1" ShadowDepth="1"/>
+                            </Border.Effect>
+                            <StackPanel>
+                                <TextBlock Text="Tag Thép Đai (MC dọc):" FontWeight="SemiBold" FontSize="10" Margin="0,0,0,4"/>
+                                <ComboBox ItemsSource="{Binding RebarTags}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedLongitudinalStirrupTag}" Height="24" FontSize="10"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Card 3: Đường Kích Thước (Dim Style) -->
+                        <Border Canvas.Left="356" Canvas.Top="318" Width="160" 
+                                Background="#F7FFFFFF" BorderBrush="#FFCCCCCC" BorderThickness="1" CornerRadius="6" Padding="6" HorizontalAlignment="Left" VerticalAlignment="Top">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="8" Color="#111111" Opacity="0.1" ShadowDepth="1"/>
+                            </Border.Effect>
+                            <StackPanel>
+                                <TextBlock Text="Dim Style (Kích thước):" FontWeight="SemiBold" FontSize="10" Margin="0,0,0,4"/>
+                                <ComboBox ItemsSource="{Binding DimensionTypes}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedDimType}" Height="24" FontSize="10"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Card 4: Tag Thép Dọc (MC Ngang / Multi-Rebar) -->
+                        <Border Canvas.Left="632" Canvas.Top="356" Width="170" 
+                                Background="#F7FFFFFF" BorderBrush="#FFCCCCCC" BorderThickness="1" CornerRadius="6" Padding="6" HorizontalAlignment="Center" VerticalAlignment="Top">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="8" Color="#111111" Opacity="0.1" ShadowDepth="1"/>
+                            </Border.Effect>
+                            <StackPanel>
+                                <TextBlock Text="Tag Thép Dọc (MC ngang - Multi):" FontWeight="SemiBold" FontSize="10" Margin="0,0,0,4"/>
+                                <ComboBox ItemsSource="{Binding MultiRebarTags}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedCrossSectionMainRebarTag}" Height="24" FontSize="10"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Card 5: Tag Thép Đai (MC Ngang) -->
+                        <Border Canvas.Left="632" Canvas.Top="430" Width="170" 
+                                Background="#F7FFFFFF" BorderBrush="#FFCCCCCC" BorderThickness="1" CornerRadius="6" Padding="6" HorizontalAlignment="Center" VerticalAlignment="Top">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="8" Color="#111111" Opacity="0.1" ShadowDepth="1"/>
+                            </Border.Effect>
+                            <StackPanel>
+                                <TextBlock Text="Tag Thép Đai (MC ngang):" FontWeight="SemiBold" FontSize="10" Margin="0,0,0,4"/>
+                                <ComboBox ItemsSource="{Binding RebarTags}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedCrossSectionStirrupTag}" Height="24" FontSize="10"/>
+                            </StackPanel>
+                        </Border>
+
+                    </Canvas>
                 </Grid>
+            </Border>
 
-                <!-- 1.2 Thông tin dầm chọn -->
-                <Border Grid.Row="1" Background="#F8F9FA" BorderBrush="#E0E0E0" BorderThickness="1" Padding="15" Margin="0,0,0,20" CornerRadius="3">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="1.5*"/>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="1*"/>
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="10"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
+            <!-- VÙNG PHỤ (SIDEBAR AREA): THIẾT LẬP TẠO VIEW -->
+            <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Margin="0,0,5,0">
 
-                        <TextBlock Grid.Column="0" Grid.Row="0" Text="Tên Dầm: " FontWeight="Bold" Margin="0"/>
-                        <TextBlock Grid.Column="1" Grid.Row="0" Text="{Binding BeamName}" Foreground="#111111" Margin="5,0,0,0"/>
 
-                        <TextBlock Grid.Column="2" Grid.Row="0" Text="Tiết diện: " FontWeight="Bold" Margin="0"/>
-                        <TextBlock Grid.Column="3" Grid.Row="0" Text="{Binding BeamSize}" Foreground="#111111" Margin="5,0,0,0"/>
 
-                        <TextBlock Grid.Column="0" Grid.Row="2" Text="Chiều dài: " FontWeight="Bold" Margin="0"/>
-                        <TextBlock Grid.Column="1" Grid.Row="2" Text="{Binding BeamLength}" Foreground="#111111" Margin="5,0,0,0"/>
 
-                        <TextBlock Grid.Column="2" Grid.Row="2" Text="Tầng/Level: " FontWeight="Bold" Margin="0"/>
-                        <TextBlock Grid.Column="3" Grid.Row="2" Text="{Binding BeamLevel}" Foreground="#111111" Margin="5,0,0,0"/>
-                    </Grid>
-                </Border>
-
-                <!-- 1.3 Thiết lập Sheet & View Templates -->
-                <GroupBox Grid.Row="2" Header="Bước 1.2: Thiết lập Bản vẽ &amp; Khung nhìn dầm (Cần chọn dầm trước)" IsEnabled="{Binding HasSelectedBeam}">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="20"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-
-                        <!-- Cột trái: Khung tên & Tỷ lệ -->
-                        <StackPanel Grid.Column="0">
+                    <!-- 1.3 Thiết lập Sheet & View Templates -->
+                    <GroupBox Header="Thiết lập bản vẽ &amp; khung nhìn" IsEnabled="{Binding HasSelectedBeam}" Margin="0,0,0,15">
+                        <StackPanel>
                             <TextBlock Text="Khung tên (TitleBlock):" FontWeight="SemiBold"/>
                             <ComboBox ItemsSource="{Binding TitleBlocks}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedTitleBlock}" />
 
-                            <TextBlock Text="Tỷ lệ bản vẽ (View Scale):" FontWeight="SemiBold" Margin="0,12,0,4"/>
+                            <TextBlock Text="Tỷ lệ bản vẽ (View Scale):" FontWeight="SemiBold" Margin="0,10,0,4"/>
                             <ComboBox ItemsSource="{Binding ViewScales}" SelectedItem="{Binding SelectedViewScale}" />
-                            
-                            <TextBlock Text="Loại hình chiếu (Section View Type):" FontWeight="SemiBold" Margin="0,12,0,4"/>
-                            <ComboBox ItemsSource="{Binding SectionViewTypes}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedSectionViewType}" />
-                        </StackPanel>
 
-                        <!-- Cột phải: View Templates -->
-                        <StackPanel Grid.Column="2">
-                            <TextBlock Text="Mẫu hiển thị (View Template) - Mặt cắt dọc:" FontWeight="SemiBold"/>
+                            <TextBlock Text="Loại hình chiếu mặt cắt dọc (Section View Type):" FontWeight="SemiBold" Margin="0,10,0,4"/>
+                            <ComboBox ItemsSource="{Binding SectionViewTypes}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedSectionViewType}" />
+
+                            <TextBlock Text="Loại hình chiếu mặt cắt ngang (Detail View Type):" FontWeight="SemiBold" Margin="0,10,0,4"/>
+                            <ComboBox ItemsSource="{Binding DetailViewTypes}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedDetailViewType}" />
+
+                            <TextBlock Text="Kiểu cổng nhìn (Viewport Type) - Dọc:" FontWeight="SemiBold" Margin="0,10,0,4"/>
+                            <ComboBox ItemsSource="{Binding ViewportTypes}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedLongitudinalViewportType}" />
+
+                            <TextBlock Text="Kiểu cổng nhìn (Viewport Type) - Ngang:" FontWeight="SemiBold" Margin="0,10,0,4"/>
+                            <ComboBox ItemsSource="{Binding ViewportTypes}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedCrossSectionViewportType}" />
+
+                            <TextBlock Text="Mẫu hiển thị (Template) - Dọc:" FontWeight="SemiBold" Margin="0,10,0,4"/>
                             <ComboBox ItemsSource="{Binding ViewTemplates}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedLongitudinalViewTemplate}" />
 
-                            <TextBlock Text="Mẫu hiển thị (View Template) - Mặt cắt ngang:" FontWeight="SemiBold" Margin="0,12,0,4"/>
+                            <TextBlock Text="Mẫu hiển thị (Template) - Ngang:" FontWeight="SemiBold" Margin="0,10,0,4"/>
                             <ComboBox ItemsSource="{Binding ViewTemplates}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedSectionViewTemplate}" />
-
-                            <!-- Nút tạo View thủ công -->
-                            <Button Content="TẠO CÁC KHUNG NHÌN (VIEW)" Style="{StaticResource BtnPrimary}" Margin="0,32,0,0" Height="40" Click="BtnCreateViews_Click"/>
                         </StackPanel>
-                    </Grid>
-                </GroupBox>
-            </Grid>
+                    </GroupBox>
+
+                    <!-- Hành động (Actions) -->
+                    <GroupBox Header="Thực thi triển khai Shop Drawing">
+                        <StackPanel>
+                            <!-- Nút triển khai duy nhất -->
+                            <Button x:Name="BtnExecute" Content="TRIỂN KHAI SHOP DRAWING" Style="{StaticResource BtnPrimary}" Height="40" Click="BtnExecute_Click"/>
+                        </StackPanel>
+                    </GroupBox>
+                </StackPanel>
+            </ScrollViewer>
         </Grid>
 
         <!-- WIZARD FOOTER -->
-        <Border Grid.Row="2" BorderBrush="#E0E0E0" BorderThickness="0,1,0,0" Padding="0,15,0,0" Margin="0,10,0,0">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="100"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                
-                <!-- Tiến trình -->
-                <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,90,0">
-                    <TextBlock Text="Tiến độ thực thi..." Foreground="#666666" Margin="0,0,0,4" FontSize="11" FontStyle="Italic"/>
-                    <ProgressBar Height="8" Minimum="0" Maximum="100" Value="{Binding ProgressValue}" Background="#EEEEEE" Foreground="#333333" BorderThickness="0" />
-                </StackPanel>
-
-                <!-- Nút Cancel / Finish -->
-                <Button Grid.Column="2" Content="Đóng" Width="90" Style="{StaticResource BtnSecondary}" Click="BtnCancel_Click"/>
-            </Grid>
-        </Border>
         
     </Grid>
 </Window>
